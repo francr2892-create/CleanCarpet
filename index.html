@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CleanCarpet — Cotizaciones</title>
+<link rel="icon" id="favicon" type="image/png" href="">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --teal-900:#0a3b38;
+    --teal-700:#0f766e;
+    --teal-600:#0d9488;
+    --cyan-500:#06b6d4;
+    --cyan-100:#cffafe;
+    --ink:#1f2937;
+    --muted:#6b7280;
+    --bg:#f2f7f8;
+    --card:#ffffff;
+    --border:#e2e8f0;
+    --danger:#dc2626;
+    --danger-bg:#fef2f2;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Inter',system-ui,-apple-system,Segoe UI,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:920px;margin:0 auto;padding:32px 20px 64px;}
+
+  header.app-header{
+    display:flex;align-items:center;gap:16px;padding-bottom:24px;
+  }
+  header.app-header img{width:60px;height:60px;display:block;border-radius:14px;}
+  header.app-header .brand-text h1{
+    margin:0;font-family:'Poppins',sans-serif;font-weight:700;font-size:26px;color:var(--teal-900);
+    letter-spacing:-0.02em;
+  }
+  header.app-header .brand-text p{margin:2px 0 0;font-size:13px;color:var(--muted);}
+
+  .card{
+    background:var(--card);border:1px solid var(--border);border-radius:14px;
+    padding:26px 28px;margin-bottom:22px;box-shadow:0 1px 2px rgba(16,24,40,.04);
+  }
+  .card h2{
+    margin:0 0 18px;font-family:'Poppins',sans-serif;font-size:16px;color:var(--teal-900);
+    display:flex;align-items:center;gap:8px;
+  }
+  .card h2 .dot{width:8px;height:8px;border-radius:50%;background:var(--cyan-500);display:inline-block;}
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+  @media (max-width:640px){.grid2{grid-template-columns:1fr;}}
+
+  .field label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.03em;}
+  .field input{
+    width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;
+    font-size:14.5px;font-family:inherit;color:var(--ink);background:#fbfdfd;
+    transition:border-color .15s,box-shadow .15s;
+  }
+  .field input:focus{outline:none;border-color:var(--cyan-500);box-shadow:0 0 0 3px var(--cyan-100);background:#fff;}
+
+  .contact-box{
+    background:#f7fafa;border:1px dashed var(--border);border-radius:10px;padding:14px 16px;
+    font-size:13.5px;color:var(--muted);line-height:1.7;
+  }
+  .contact-box b{color:var(--teal-900);}
+
+  table.items{width:100%;border-collapse:collapse;margin-top:4px;}
+  table.items thead th{
+    background:var(--teal-700);color:#fff;font-size:12px;text-transform:uppercase;letter-spacing:.04em;
+    font-weight:600;padding:10px 10px;text-align:left;
+  }
+  table.items thead th:first-child{border-top-left-radius:8px;}
+  table.items thead th:last-child{border-top-right-radius:8px;}
+  table.items tbody td{border-bottom:1px solid var(--border);padding:6px 8px;vertical-align:middle;}
+  table.items tbody tr:hover{background:#fafcfc;}
+  table.items input{
+    width:100%;border:1px solid transparent;background:transparent;padding:8px 8px;border-radius:6px;
+    font-size:14px;font-family:inherit;color:var(--ink);
+  }
+  table.items input:focus{outline:none;border-color:var(--cyan-500);background:#fff;box-shadow:0 0 0 3px var(--cyan-100);}
+  table.items input.num{text-align:right;}
+  td.col-cant{width:90px;}
+  td.col-price{width:150px;}
+  td.col-sub{width:150px;}
+  td.col-del{width:36px;text-align:center;}
+  .subtotal-cell{font-weight:600;color:var(--teal-900);padding:8px;display:block;text-align:right;}
+  .btn-del{
+    border:none;background:none;color:var(--muted);cursor:pointer;font-size:16px;line-height:1;
+    padding:6px;border-radius:6px;
+  }
+  .btn-del:hover{background:var(--danger-bg);color:var(--danger);}
+
+  .add-row{
+    margin-top:12px;border:1.5px dashed var(--teal-600);color:var(--teal-700);background:#fff;
+    padding:9px 16px;border-radius:8px;font-size:13.5px;font-weight:600;cursor:pointer;
+  }
+  .add-row:hover{background:#f0fdfa;}
+
+  .totals{
+    margin-top:18px;display:flex;justify-content:flex-end;
+  }
+  .totals table{border-collapse:collapse;min-width:280px;}
+  .totals td{padding:6px 4px;font-size:14px;}
+  .totals td.label{color:var(--muted);text-align:right;padding-right:18px;}
+  .totals td.val{text-align:right;font-weight:600;min-width:120px;}
+  .totals tr.total td{border-top:2px solid var(--teal-700);}
+  .totals tr.total td.label{color:var(--teal-900);font-weight:700;font-size:15px;}
+  .totals tr.total td.val{color:var(--teal-700);font-weight:700;font-size:18px;}
+
+  .legend{
+    margin-top:18px;font-size:12.5px;color:var(--muted);font-style:italic;
+    border-top:1px solid var(--border);padding-top:14px;
+  }
+
+  .actions{display:flex;justify-content:flex-end;margin-top:8px;}
+  .btn-pdf{
+    background:linear-gradient(135deg,var(--teal-600),var(--cyan-500));
+    color:#fff;border:none;padding:13px 26px;border-radius:10px;font-size:15px;font-weight:600;
+    cursor:pointer;display:flex;align-items:center;gap:8px;box-shadow:0 4px 12px rgba(13,148,136,.25);
+    font-family:inherit;
+  }
+  .btn-pdf:hover{filter:brightness(1.05);}
+  .btn-pdf:disabled{opacity:.6;cursor:not-allowed;}
+
+  .toast{
+    position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:var(--ink);color:#fff;padding:12px 20px;border-radius:8px;font-size:14px;
+    opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;z-index:50;
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="app-header">
+    <img id="logoImg" alt="Logo CleanCarpet">
+    <div class="brand-text">
+      <h1>CleanCarpet</h1>
+      <p>Limpieza profesional de alfombras y textiles</p>
+    </div>
+  </header>
+
+  <section class="card">
+    <h2><span class="dot"></span>Nueva cotización</h2>
+
+    <div class="grid2">
+      <div class="field">
+        <label for="quoteDate">Fecha de la cotización</label>
+        <input type="date" id="quoteDate">
+      </div>
+      <div class="field">
+        <label>Nuestro contacto</label>
+        <div class="contact-box">
+          <b>Jaime Rodríguez Leiva</b><br>
+          Cédula: 1-1422-0005<br>
+          Correo: jaguime0710@gmail.com<br>
+          Cel: 7010-1123
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2><span class="dot"></span>Datos del cliente</h2>
+    <div class="grid2">
+      <div class="field">
+        <label for="clientName">Nombre del cliente</label>
+        <input type="text" id="clientName" placeholder="Nombre completo">
+      </div>
+      <div class="field">
+        <label for="clientId">Número de cédula</label>
+        <input type="text" id="clientId" placeholder="0-0000-0000">
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2><span class="dot"></span>Detalle de la cotización</h2>
+    <table class="items">
+      <thead>
+        <tr>
+          <th class="col-cant">Cantidad</th>
+          <th>Descripción</th>
+          <th class="col-price">Precio unitario</th>
+          <th class="col-sub">Subtotal</th>
+          <th class="col-del"></th>
+        </tr>
+      </thead>
+      <tbody id="itemsBody"></tbody>
+    </table>
+    <button class="add-row" id="addRowBtn" type="button">+ Agregar línea</button>
+
+    <div class="totals">
+      <table>
+        <tr>
+          <td class="label">Subtotal</td>
+          <td class="val" id="totSubtotal">₡0,00</td>
+        </tr>
+        <tr>
+          <td class="label">IVA (13%)</td>
+          <td class="val" id="totIva">₡0,00</td>
+        </tr>
+        <tr class="total">
+          <td class="label">Total</td>
+          <td class="val" id="totTotal">₡0,00</td>
+        </tr>
+      </table>
+    </div>
+
+    <p class="legend">Esta cotización tiene una vigencia de 45 días a partir de su fecha de emisión.</p>
+
+    <div class="actions">
+      <button class="btn-pdf" id="downloadBtn" type="button">⬇ Descargar cotización en PDF</button>
+    </div>
+  </section>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.4/dist/jspdf.plugin.autotable.min.js"></script>
+<script>
+/* ---------- Logo (dibujado por código, sin archivos externos) ---------- */
+function drawLogo(size){
+  const canvas = document.createElement('canvas');
+  canvas.width = size; canvas.height = size;
+  const ctx = canvas.getContext('2d');
+
+  // Fondo con degradado
+  const r = size * 0.22;
+  const grad = ctx.createLinearGradient(0,0,size,size);
+  grad.addColorStop(0,'#0f766e');
+  grad.addColorStop(1,'#06b6d4');
+  ctx.fillStyle = grad;
+  roundRect(ctx,0,0,size,size,r);
+  ctx.fill();
+
+  // "Alfombra": rectángulo blanco redondeado, ligeramente rotado, con franjas y flecos
+  ctx.save();
+  ctx.translate(size*0.46, size*0.56);
+  ctx.rotate(-8 * Math.PI/180);
+  const cw = size*0.62, ch = size*0.40;
+  ctx.fillStyle = 'rgba(255,255,255,0.96)';
+  roundRect(ctx, -cw/2, -ch/2, cw, ch, size*0.05);
+  ctx.fill();
+
+  // franjas internas (patrón de alfombra)
+  ctx.strokeStyle = 'rgba(15,118,110,0.35)';
+  ctx.lineWidth = size*0.012;
+  for(let i=1;i<=3;i++){
+    const y = -ch/2 + (ch/4)*i;
+    ctx.beginPath();
+    ctx.moveTo(-cw/2 + size*0.04, y);
+    ctx.lineTo(cw/2 - size*0.04, y);
+    ctx.stroke();
+  }
+
+  // flecos inferiores
+  ctx.strokeStyle = 'rgba(15,118,110,0.55)';
+  ctx.lineWidth = size*0.01;
+  const fringeCount = 9;
+  for(let i=0;i<fringeCount;i++){
+    const x = -cw/2 + (cw/(fringeCount-1))*i;
+    ctx.beginPath();
+    ctx.moveTo(x, ch/2);
+    ctx.lineTo(x, ch/2 + size*0.035);
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  // Gota de agua (limpieza) arriba a la derecha
+  ctx.save();
+  const dropX = size*0.72, dropY = size*0.30, dropR = size*0.15;
+  ctx.beginPath();
+  ctx.moveTo(dropX, dropY - dropR*1.5);
+  ctx.bezierCurveTo(dropX + dropR*1.05, dropY - dropR*0.25, dropX + dropR*0.95, dropY + dropR*0.85, dropX, dropY + dropR*0.95);
+  ctx.bezierCurveTo(dropX - dropR*0.95, dropY + dropR*0.85, dropX - dropR*1.05, dropY - dropR*0.25, dropX, dropY - dropR*1.5);
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(255,255,255,0.98)';
+  ctx.fill();
+  ctx.lineWidth = size*0.012;
+  ctx.strokeStyle = 'rgba(15,118,110,0.4)';
+  ctx.stroke();
+
+  // brillo dentro de la gota
+  ctx.beginPath();
+  ctx.arc(dropX - dropR*0.35, dropY + dropR*0.15, dropR*0.18, 0, Math.PI*2);
+  ctx.fillStyle = 'rgba(6,182,212,0.55)';
+  ctx.fill();
+  ctx.restore();
+
+  return canvas.toDataURL('image/png');
+}
+function roundRect(ctx,x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.arcTo(x+w,y,x+w,y+h,r);
+  ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r);
+  ctx.arcTo(x,y,x+w,y,r);
+  ctx.closePath();
+}
+
+const logoDataUrl = drawLogo(256);
+document.getElementById('logoImg').src = logoDataUrl;
+document.getElementById('favicon').href = logoDataUrl;
+
+/* ---------- Utilidades ---------- */
+function formatCurrency(n){
+  return '₡' + (n||0).toLocaleString('es-CR',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+// La fuente base de jsPDF no incluye el glifo ₡, así que el PDF usa "CRC" en su lugar.
+function formatCurrencyPdf(n){
+  return 'CRC ' + (n||0).toLocaleString('es-CR',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+function todayISO(){
+  const d = new Date();
+  const mm = String(d.getMonth()+1).padStart(2,'0');
+  const dd = String(d.getDate()).padStart(2,'0');
+  return `${d.getFullYear()}-${mm}-${dd}`;
+}
+const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+function formatDateEs(isoStr){
+  const [y,m,d] = isoStr.split('-').map(Number);
+  return `${d} de ${MESES[m-1]} de ${y}`;
+}
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(()=>t.classList.remove('show'), 2600);
+}
+
+/* ---------- Tabla de líneas ---------- */
+const itemsBody = document.getElementById('itemsBody');
+let rowCounter = 0;
+
+function addRow(){
+  const id = ++rowCounter;
+  const tr = document.createElement('tr');
+  tr.dataset.id = id;
+  tr.innerHTML = `
+    <td class="col-cant"><input type="number" class="num qty" min="0" step="1" value="1"></td>
+    <td><input type="text" class="desc" placeholder="Descripción del servicio"></td>
+    <td class="col-price"><input type="number" class="num price" min="0" step="0.01" value="0"></td>
+    <td class="col-sub"><span class="subtotal-cell">₡0,00</span></td>
+    <td class="col-del"><button type="button" class="btn-del" title="Eliminar línea">✕</button></td>
+  `;
+  itemsBody.appendChild(tr);
+
+  tr.querySelector('.qty').addEventListener('input', recalc);
+  tr.querySelector('.price').addEventListener('input', recalc);
+  tr.querySelector('.btn-del').addEventListener('click', ()=>{
+    tr.remove();
+    recalc();
+  });
+}
+
+function recalc(){
+  let subtotal = 0;
+  itemsBody.querySelectorAll('tr').forEach(tr=>{
+    const qty = parseFloat(tr.querySelector('.qty').value) || 0;
+    const price = parseFloat(tr.querySelector('.price').value) || 0;
+    const sub = qty * price;
+    tr.querySelector('.subtotal-cell').textContent = formatCurrency(sub);
+    subtotal += sub;
+  });
+  const iva = subtotal * 0.13;
+  const total = subtotal + iva;
+  document.getElementById('totSubtotal').textContent = formatCurrency(subtotal);
+  document.getElementById('totIva').textContent = formatCurrency(iva);
+  document.getElementById('totTotal').textContent = formatCurrency(total);
+  return {subtotal, iva, total};
+}
+
+document.getElementById('addRowBtn').addEventListener('click', addRow);
+document.getElementById('quoteDate').value = todayISO();
+
+addRow();
+addRow();
+recalc();
+
+/* ---------- Generar PDF ---------- */
+document.getElementById('downloadBtn').addEventListener('click', ()=>{
+  const clientName = document.getElementById('clientName').value.trim();
+  const clientId = document.getElementById('clientId').value.trim();
+  const quoteDate = document.getElementById('quoteDate').value;
+
+  if(!clientName){
+    showToast('Ingresá el nombre del cliente antes de generar el PDF.');
+    document.getElementById('clientName').focus();
+    return;
+  }
+
+  const rows = [];
+  itemsBody.querySelectorAll('tr').forEach(tr=>{
+    const qty = parseFloat(tr.querySelector('.qty').value) || 0;
+    const desc = tr.querySelector('.desc').value.trim();
+    const price = parseFloat(tr.querySelector('.price').value) || 0;
+    if(desc || qty || price){
+      rows.push([String(qty), desc || '-', formatCurrencyPdf(price), formatCurrencyPdf(qty*price)]);
+    }
+  });
+  if(rows.length === 0){
+    showToast('Agregá al menos una línea con descripción.');
+    return;
+  }
+
+  const {subtotal, iva, total} = recalc();
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({unit:'mm', format:'a4'});
+  const pageW = doc.internal.pageSize.getWidth();
+  const marginX = 15;
+
+  // Logo + wordmark
+  doc.addImage(logoDataUrl, 'PNG', marginX, 14, 22, 22);
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(20);
+  doc.setTextColor(10,59,56);
+  doc.text('CleanCarpet', marginX + 27, 25);
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(9.5);
+  doc.setTextColor(107,114,128);
+  doc.text('Limpieza profesional de alfombras y textiles', marginX + 27, 31);
+
+  // Título + fecha (derecha)
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(15);
+  doc.setTextColor(15,118,110);
+  doc.text('COTIZACIÓN', pageW - marginX, 20, {align:'right'});
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(10);
+  doc.setTextColor(31,41,55);
+  doc.text('Fecha: ' + formatDateEs(quoteDate), pageW - marginX, 27, {align:'right'});
+
+  // Línea separadora
+  doc.setDrawColor(226,232,240);
+  doc.setLineWidth(0.4);
+  doc.line(marginX, 40, pageW - marginX, 40);
+
+  // Cliente
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(11);
+  doc.setTextColor(10,59,56);
+  doc.text('Cliente', marginX, 48);
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(10.5);
+  doc.setTextColor(31,41,55);
+  doc.text('Nombre: ' + clientName, marginX, 55);
+  doc.text('Cédula: ' + (clientId || '-'), marginX, 61);
+
+  // Tabla
+  doc.autoTable({
+    startY: 68,
+    head: [['Cantidad','Descripción','Precio unitario','Subtotal']],
+    body: rows,
+    theme: 'grid',
+    styles:{ font:'helvetica', fontSize:10, cellPadding:4, textColor:[31,41,55], lineColor:[226,232,240] },
+    headStyles:{ fillColor:[15,118,110], textColor:255, fontStyle:'bold' },
+    columnStyles:{
+      0:{cellWidth:26, halign:'center'},
+      2:{cellWidth:42, halign:'right'},
+      3:{cellWidth:42, halign:'right'}
+    },
+    margin:{left:marginX, right:marginX}
+  });
+
+  let y = doc.lastAutoTable.finalY + 10;
+  const rightEdge = pageW - marginX;
+
+  function totalLine(label, value, bold, size, color){
+    doc.setFont('helvetica', bold ? 'bold' : 'normal');
+    doc.setFontSize(size);
+    doc.setTextColor(...color);
+    doc.text(label, rightEdge - 62, y, {align:'left'});
+    doc.text(value, rightEdge, y, {align:'right'});
+    y += bold ? 8 : 6.5;
+  }
+  totalLine('Subtotal', formatCurrencyPdf(subtotal), false, 10.5, [75,85,99]);
+  totalLine('IVA (13%)', formatCurrencyPdf(iva), false, 10.5, [75,85,99]);
+  doc.setDrawColor(15,118,110);
+  doc.setLineWidth(0.5);
+  doc.line(rightEdge - 62, y - 4.5, rightEdge, y - 4.5);
+  totalLine('Total', formatCurrencyPdf(total), true, 13, [15,118,110]);
+
+  y += 8;
+  doc.setFont('helvetica','italic');
+  doc.setFontSize(9.5);
+  doc.setTextColor(107,114,128);
+  doc.text('Esta cotización tiene una vigencia de 45 días a partir de su fecha de emisión.', marginX, y);
+
+  // Footer contacto
+  const pageH = doc.internal.pageSize.getHeight();
+  doc.setDrawColor(226,232,240);
+  doc.line(marginX, pageH - 22, pageW - marginX, pageH - 22);
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(9);
+  doc.setTextColor(10,59,56);
+  doc.text('Jaime Rodríguez Leiva', marginX, pageH - 16);
+  doc.setFont('helvetica','normal');
+  doc.setTextColor(107,114,128);
+  doc.text('Cédula 1-1422-0005   •   jaguime0710@gmail.com   •   Cel 7010-1123', marginX, pageH - 11);
+
+  const safeClient = clientName.replace(/[^a-z0-9áéíóúñ]+/gi,'_');
+  doc.save(`Cotizacion_CleanCarpet_${safeClient}_${quoteDate}.pdf`);
+});
+</script>
+</body>
+</html>
