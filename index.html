@@ -134,16 +134,82 @@
     opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;z-index:50;
   }
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  .header-row{display:flex;align-items:center;justify-content:space-between;gap:16px;}
+  .user-box{display:flex;align-items:center;gap:12px;font-size:13px;color:var(--muted);}
+  .btn-logout{
+    border:1px solid var(--border);background:#fff;color:var(--ink);
+    padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;
+  }
+  .btn-logout:hover{background:#f7fafa;border-color:var(--teal-600);color:var(--teal-700);}
+
+  .login-screen{
+    min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;
+  }
+  .login-card{
+    background:var(--card);border:1px solid var(--border);border-radius:14px;
+    padding:36px 32px;max-width:360px;width:100%;box-shadow:0 4px 20px rgba(16,24,40,.08);
+    text-align:center;
+  }
+  .login-card img{width:64px;height:64px;border-radius:14px;margin-bottom:12px;}
+  .login-card h1{margin:0 0 4px;font-family:'Poppins',sans-serif;font-weight:700;font-size:22px;color:var(--teal-900);}
+  .login-card p.tagline{margin:0 0 24px;font-size:13px;color:var(--muted);}
+  .login-card .field{text-align:left;margin-bottom:14px;}
+  .login-card .field label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin-bottom:6px;}
+  .login-card .field input{
+    width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;
+    font-size:14.5px;font-family:inherit;color:var(--ink);background:#fbfdfd;
+  }
+  .login-card .field input:focus{outline:none;border-color:var(--cyan-500);box-shadow:0 0 0 3px var(--cyan-100);background:#fff;}
+  .btn-login{
+    width:100%;margin-top:6px;
+    background:linear-gradient(135deg,var(--teal-600),var(--cyan-500));
+    color:#fff;border:none;padding:12px 20px;border-radius:10px;font-size:15px;font-weight:600;
+    cursor:pointer;font-family:inherit;
+  }
+  .btn-login:hover{filter:brightness(1.05);}
+  .btn-login:disabled{opacity:.6;cursor:not-allowed;}
+  .login-error{
+    margin-top:14px;font-size:13px;color:var(--danger);background:var(--danger-bg);
+    border-radius:8px;padding:10px 12px;display:none;
+  }
+  .login-error.show{display:block;}
 </style>
 </head>
 <body>
 
-<div class="wrap">
-  <header class="app-header">
-    <img id="logoImg" alt="Logo CleanCarpet">
-    <div class="brand-text">
-      <h1>CleanCarpet</h1>
-      <p>Limpieza profesional de alfombras y textiles</p>
+<div class="login-screen" id="loginScreen">
+  <div class="login-card">
+    <img id="loginLogoImg" alt="Logo CleanCarpet">
+    <h1>CleanCarpet</h1>
+    <p class="tagline">Ingresá para crear cotizaciones</p>
+    <form id="loginForm">
+      <div class="field">
+        <label for="loginEmail">Correo</label>
+        <input type="email" id="loginEmail" autocomplete="username" required>
+      </div>
+      <div class="field">
+        <label for="loginPassword">Contraseña</label>
+        <input type="password" id="loginPassword" autocomplete="current-password" required>
+      </div>
+      <button class="btn-login" id="loginBtn" type="submit">Iniciar sesión</button>
+    </form>
+    <div class="login-error" id="loginError"></div>
+  </div>
+</div>
+
+<div class="wrap" id="appContent" style="display:none;">
+  <header class="app-header header-row">
+    <div style="display:flex;align-items:center;gap:16px;">
+      <img id="logoImg" alt="Logo CleanCarpet">
+      <div class="brand-text">
+        <h1>CleanCarpet</h1>
+        <p>Limpieza profesional de alfombras y textiles</p>
+      </div>
+    </div>
+    <div class="user-box">
+      <span id="userEmailLabel"></span>
+      <button class="btn-logout" id="logoutBtn" type="button">Cerrar sesión</button>
     </div>
   </header>
 
@@ -152,7 +218,7 @@
 
     <div class="grid2">
       <div class="field">
-        <label for="quoteDate">Fecha de la cotización</label>
+        <label for="quoteDate">Fecha de la cotización *</label>
         <input type="date" id="quoteDate">
       </div>
       <div class="field">
@@ -160,7 +226,7 @@
         <div class="contact-box">
           <b>Jaime Rodríguez Leiva</b><br>
           Cédula: 1-1422-0005<br>
-          Correo: jaguime0710@gmail.com<br>
+          Correo: leivjaim@gmail.com<br>
           Cel: 7010-1123
         </div>
       </div>
@@ -171,11 +237,11 @@
     <h2><span class="dot"></span>Datos del cliente</h2>
     <div class="grid2">
       <div class="field">
-        <label for="clientName">Nombre del cliente</label>
+        <label for="clientName">Nombre del cliente *</label>
         <input type="text" id="clientName" placeholder="Nombre completo">
       </div>
       <div class="field">
-        <label for="clientId">Número de cédula</label>
+        <label for="clientId">Número de cédula (opcional)</label>
         <input type="text" id="clientId" placeholder="0-0000-0000">
       </div>
     </div>
@@ -186,9 +252,9 @@
     <table class="items">
       <thead>
         <tr>
-          <th class="col-cant">Cantidad</th>
-          <th>Descripción</th>
-          <th class="col-price">Precio unitario</th>
+          <th class="col-cant">Cantidad *</th>
+          <th>Descripción *</th>
+          <th class="col-price">Precio unitario *</th>
           <th class="col-sub">Subtotal</th>
           <th class="col-del"></th>
         </tr>
@@ -310,6 +376,7 @@ function roundRect(ctx,x,y,w,h,r){
 
 const logoDataUrl = drawLogo(256);
 document.getElementById('logoImg').src = logoDataUrl;
+document.getElementById('loginLogoImg').src = logoDataUrl;
 document.getElementById('favicon').href = logoDataUrl;
 
 /* ---------- Utilidades ---------- */
@@ -385,7 +452,6 @@ document.getElementById('addRowBtn').addEventListener('click', addRow);
 document.getElementById('quoteDate').value = todayISO();
 
 addRow();
-addRow();
 recalc();
 
 /* ---------- Generar PDF ---------- */
@@ -394,24 +460,47 @@ document.getElementById('downloadBtn').addEventListener('click', ()=>{
   const clientId = document.getElementById('clientId').value.trim();
   const quoteDate = document.getElementById('quoteDate').value;
 
+  if(!quoteDate){
+    showToast('Ingresá la fecha de la cotización.');
+    document.getElementById('quoteDate').focus();
+    return;
+  }
   if(!clientName){
     showToast('Ingresá el nombre del cliente antes de generar el PDF.');
     document.getElementById('clientName').focus();
     return;
   }
 
-  const rows = [];
-  itemsBody.querySelectorAll('tr').forEach(tr=>{
-    const qty = parseFloat(tr.querySelector('.qty').value) || 0;
-    const desc = tr.querySelector('.desc').value.trim();
-    const price = parseFloat(tr.querySelector('.price').value) || 0;
-    if(desc || qty || price){
-      rows.push([String(qty), desc || '-', formatCurrencyPdf(price), formatCurrencyPdf(qty*price)]);
-    }
-  });
-  if(rows.length === 0){
-    showToast('Agregá al menos una línea con descripción.');
+  const itemRows = itemsBody.querySelectorAll('tr');
+  if(itemRows.length === 0){
+    showToast('Agregá al menos una línea de servicio.');
     return;
+  }
+
+  const rows = [];
+  for(const tr of itemRows){
+    const qtyInput = tr.querySelector('.qty');
+    const priceInput = tr.querySelector('.price');
+    const qty = parseFloat(qtyInput.value) || 0;
+    const desc = tr.querySelector('.desc').value.trim();
+    const price = parseFloat(priceInput.value) || 0;
+
+    if(!qty){
+      showToast('Ingresá la cantidad en todas las líneas.');
+      qtyInput.focus();
+      return;
+    }
+    if(!desc){
+      showToast('Ingresá la descripción en todas las líneas.');
+      tr.querySelector('.desc').focus();
+      return;
+    }
+    if(!price){
+      showToast('Ingresá el precio unitario en todas las líneas.');
+      priceInput.focus();
+      return;
+    }
+    rows.push([String(qty), desc, formatCurrencyPdf(price), formatCurrencyPdf(qty*price)]);
   }
 
   const {subtotal, iva, total} = recalc();
@@ -508,10 +597,83 @@ document.getElementById('downloadBtn').addEventListener('click', ()=>{
   doc.text('Jaime Rodríguez Leiva', marginX, pageH - 16);
   doc.setFont('helvetica','normal');
   doc.setTextColor(107,114,128);
-  doc.text('Cédula 1-1422-0005   •   jaguime0710@gmail.com   •   Cel 7010-1123', marginX, pageH - 11);
+  doc.text('Cédula 1-1422-0005   •   leivjaim@gmail.com   •   Cel 7010-1123', marginX, pageH - 11);
 
   const safeClient = clientName.replace(/[^a-z0-9áéíóúñ]+/gi,'_');
   doc.save(`Cotizacion_CleanCarpet_${safeClient}_${quoteDate}.pdf`);
+});
+</script>
+
+<script type="module">
+/* ---------- Autenticación (Firebase) ---------- */
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import {
+  getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAVNLgCGRhE-uJmGgVdETB_Hg2N4PYELlk",
+  authDomain: "cleancarpet-5464f.firebaseapp.com",
+  projectId: "cleancarpet-5464f",
+  storageBucket: "cleancarpet-5464f.firebasestorage.app",
+  messagingSenderId: "611557288113",
+  appId: "1:611557288113:web:0a13c3c0d5b42ebf799a90"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+const loginScreen = document.getElementById('loginScreen');
+const appContent = document.getElementById('appContent');
+const loginForm = document.getElementById('loginForm');
+const loginError = document.getElementById('loginError');
+const loginBtn = document.getElementById('loginBtn');
+const userEmailLabel = document.getElementById('userEmailLabel');
+
+function showLoginError(msg){
+  loginError.textContent = msg;
+  loginError.classList.add('show');
+}
+
+const AUTH_ERROR_MESSAGES = {
+  'auth/invalid-email': 'El correo ingresado no es válido.',
+  'auth/invalid-credential': 'Correo o contraseña incorrectos.',
+  'auth/user-not-found': 'Correo o contraseña incorrectos.',
+  'auth/wrong-password': 'Correo o contraseña incorrectos.',
+  'auth/too-many-requests': 'Demasiados intentos. Esperá un momento e intentá de nuevo.'
+};
+
+onAuthStateChanged(auth, (user) => {
+  if(user){
+    loginScreen.style.display = 'none';
+    appContent.style.display = '';
+    userEmailLabel.textContent = user.email;
+  } else {
+    appContent.style.display = 'none';
+    loginScreen.style.display = 'flex';
+  }
+});
+
+loginForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  loginError.classList.remove('show');
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+
+  loginBtn.disabled = true;
+  loginBtn.textContent = 'Ingresando...';
+  try {
+    await signInWithEmailAndPassword(auth, email, password);
+  } catch(err){
+    showLoginError(AUTH_ERROR_MESSAGES[err.code] || 'No se pudo iniciar sesión. Intentá de nuevo.');
+  } finally {
+    loginBtn.disabled = false;
+    loginBtn.textContent = 'Iniciar sesión';
+  }
+});
+
+document.getElementById('logoutBtn').addEventListener('click', () => {
+  signOut(auth);
 });
 </script>
 </body>
