@@ -455,7 +455,7 @@ addRow();
 recalc();
 
 /* ---------- Generar PDF ---------- */
-document.getElementById('downloadBtn').addEventListener('click', ()=>{
+document.getElementById('downloadBtn').addEventListener('click', async ()=>{
   const clientName = document.getElementById('clientName').value.trim();
   const clientId = document.getElementById('clientId').value.trim();
   const quoteDate = document.getElementById('quoteDate').value;
@@ -505,6 +505,21 @@ document.getElementById('downloadBtn').addEventListener('click', ()=>{
 
   const {subtotal, iva, total} = recalc();
 
+  const downloadBtn = document.getElementById('downloadBtn');
+  downloadBtn.disabled = true;
+  downloadBtn.textContent = 'Generando...';
+
+  let quoteNumber;
+  try {
+    quoteNumber = await window.getNextQuoteNumber();
+  } catch(err){
+    showToast('No se pudo asignar el número de cotización. Intentá de nuevo.');
+    downloadBtn.disabled = false;
+    downloadBtn.textContent = '⬇ Descargar cotización en PDF';
+    return;
+  }
+  const quoteNumberStr = String(quoteNumber).padStart(4,'0');
+
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({unit:'mm', format:'a4'});
   const pageW = doc.internal.pageSize.getWidth();
@@ -525,7 +540,7 @@ document.getElementById('downloadBtn').addEventListener('click', ()=>{
   doc.setFont('helvetica','bold');
   doc.setFontSize(15);
   doc.setTextColor(15,118,110);
-  doc.text('COTIZACIÓN', pageW - marginX, 20, {align:'right'});
+  doc.text('COTIZACIÓN N.° ' + quoteNumberStr, pageW - marginX, 20, {align:'right'});
   doc.setFont('helvetica','normal');
   doc.setFontSize(10);
   doc.setTextColor(31,41,55);
@@ -545,11 +560,15 @@ document.getElementById('downloadBtn').addEventListener('click', ()=>{
   doc.setFontSize(10.5);
   doc.setTextColor(31,41,55);
   doc.text('Nombre: ' + clientName, marginX, 55);
-  doc.text('Cédula: ' + (clientId || '-'), marginX, 61);
+  let tableStartY = 61;
+  if(clientId){
+    doc.text('Cédula: ' + clientId, marginX, 61);
+    tableStartY = 68;
+  }
 
   // Tabla
   doc.autoTable({
-    startY: 68,
+    startY: tableStartY,
     head: [['Cantidad','Descripción','Precio unitario','Subtotal']],
     body: rows,
     theme: 'grid',
@@ -600,7 +619,10 @@ document.getElementById('downloadBtn').addEventListener('click', ()=>{
   doc.text('Cédula 1-1422-0005   •   leivjaim@gmail.com   •   Cel 7010-1123', marginX, pageH - 11);
 
   const safeClient = clientName.replace(/[^a-z0-9áéíóúñ]+/gi,'_');
-  doc.save(`Cotizacion_CleanCarpet_${safeClient}_${quoteDate}.pdf`);
+  doc.save(`Cotizacion_${quoteNumberStr}_CleanCarpet_${safeClient}_${quoteDate}.pdf`);
+
+  downloadBtn.disabled = false;
+  downloadBtn.textContent = '⬇ Descargar cotización en PDF';
 });
 </script>
 
@@ -610,6 +632,9 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/fireba
 import {
   getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+import {
+  getFirestore, doc, runTransaction
+} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAVNLgCGRhE-uJmGgVdETB_Hg2N4PYELlk",
@@ -622,6 +647,18 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
+const db = getFirestore(app);
+
+window.getNextQuoteNumber = async function(){
+  const counterRef = doc(db, 'counters', 'cotizaciones');
+  const nextNumber = await runTransaction(db, async (transaction) => {
+    const snap = await transaction.get(counterRef);
+    const current = snap.data().next;
+    transaction.update(counterRef, { next: current + 1 });
+    return current;
+  });
+  return nextNumber;
+};
 
 const loginScreen = document.getElementById('loginScreen');
 const appContent = document.getElementById('appContent');
