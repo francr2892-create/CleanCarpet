@@ -174,6 +174,35 @@
     border-radius:8px;padding:10px 12px;display:none;
   }
   .login-error.show{display:block;}
+
+  .tabs{display:flex;gap:8px;margin-bottom:22px;}
+  .tab-btn{
+    background:#fff;border:1px solid var(--border);color:var(--muted);
+    padding:10px 18px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;
+  }
+  .tab-btn:hover{border-color:var(--teal-600);color:var(--teal-700);}
+  .tab-btn.active{background:var(--teal-700);color:#fff;border-color:var(--teal-700);}
+
+  .table-scroll{overflow-x:auto;}
+  table.saved-table{width:100%;border-collapse:collapse;margin-top:4px;min-width:640px;}
+  table.saved-table thead th{
+    background:var(--teal-700);color:#fff;font-size:12px;text-transform:uppercase;letter-spacing:.04em;
+    font-weight:600;padding:10px 10px;text-align:left;white-space:nowrap;
+  }
+  table.saved-table thead th:first-child{border-top-left-radius:8px;}
+  table.saved-table thead th:last-child{border-top-right-radius:8px;}
+  table.saved-table tbody td{border-bottom:1px solid var(--border);padding:10px 10px;font-size:13.5px;vertical-align:middle;}
+  table.saved-table tbody tr:hover{background:#fafcfc;}
+  .btn-confirm{
+    background:var(--teal-600);color:#fff;border:none;padding:7px 14px;border-radius:8px;
+    font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;
+  }
+  .btn-confirm:hover{background:var(--teal-700);}
+  .btn-confirm:disabled{opacity:.6;cursor:not-allowed;}
+  .badge-confirmed{
+    background:#ecfdf5;color:#047857;padding:5px 10px;border-radius:20px;font-size:12px;font-weight:600;
+    white-space:nowrap;
+  }
 </style>
 </head>
 <body>
@@ -213,6 +242,12 @@
     </div>
   </header>
 
+  <div class="tabs">
+    <button class="tab-btn active" id="tabNewBtn" type="button">Nueva cotización</button>
+    <button class="tab-btn" id="tabSavedBtn" type="button">Cotizaciones guardadas</button>
+  </div>
+
+  <div id="viewNewQuote">
   <section class="card">
     <h2><span class="dot"></span>Nueva cotización</h2>
 
@@ -286,6 +321,66 @@
       <button class="btn-pdf" id="downloadBtn" type="button">⬇ Descargar cotización en PDF</button>
     </div>
   </section>
+  </div>
+
+  <div id="viewSavedQuotes" style="display:none;">
+    <section class="card">
+      <h2><span class="dot"></span>Cotizaciones guardadas</h2>
+      <div class="grid2">
+        <div class="field">
+          <label for="filterDate">Filtrar por fecha</label>
+          <input type="date" id="filterDate">
+        </div>
+        <div class="field">
+          <label for="filterClient">Filtrar por cliente</label>
+          <input type="text" id="filterClient" placeholder="Nombre del cliente">
+        </div>
+      </div>
+      <button type="button" class="add-row" id="clearFiltersBtn">Limpiar filtros</button>
+    </section>
+
+    <section class="card">
+      <h2><span class="dot"></span>Pendientes de confirmar</h2>
+      <div class="table-scroll">
+        <table class="saved-table">
+          <thead>
+            <tr>
+              <th>N.°</th>
+              <th>Cliente</th>
+              <th>Descripción</th>
+              <th>Fecha</th>
+              <th>Monto</th>
+              <th>Realizado por</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="pendingQuotesBody"></tbody>
+        </table>
+      </div>
+      <p class="legend" id="pendingEmptyMsg" style="display:none;">No hay cotizaciones pendientes.</p>
+    </section>
+
+    <section class="card">
+      <h2><span class="dot"></span>Confirmadas</h2>
+      <div class="table-scroll">
+        <table class="saved-table">
+          <thead>
+            <tr>
+              <th>N.°</th>
+              <th>Cliente</th>
+              <th>Descripción</th>
+              <th>Fecha</th>
+              <th>Monto</th>
+              <th>Realizado por</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="confirmedQuotesBody"></tbody>
+        </table>
+      </div>
+      <p class="legend" id="confirmedEmptyMsg" style="display:none;">No hay cotizaciones confirmadas.</p>
+    </section>
+  </div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -454,6 +549,25 @@ document.getElementById('quoteDate').value = todayISO();
 addRow();
 recalc();
 
+/* ---------- Pestañas ---------- */
+const tabNewBtn = document.getElementById('tabNewBtn');
+const tabSavedBtn = document.getElementById('tabSavedBtn');
+const viewNewQuote = document.getElementById('viewNewQuote');
+const viewSavedQuotes = document.getElementById('viewSavedQuotes');
+
+tabNewBtn.addEventListener('click', ()=>{
+  viewNewQuote.style.display = '';
+  viewSavedQuotes.style.display = 'none';
+  tabNewBtn.classList.add('active');
+  tabSavedBtn.classList.remove('active');
+});
+tabSavedBtn.addEventListener('click', ()=>{
+  viewNewQuote.style.display = 'none';
+  viewSavedQuotes.style.display = '';
+  tabSavedBtn.classList.add('active');
+  tabNewBtn.classList.remove('active');
+});
+
 /* ---------- Generar PDF ---------- */
 document.getElementById('downloadBtn').addEventListener('click', async ()=>{
   const clientName = document.getElementById('clientName').value.trim();
@@ -478,6 +592,7 @@ document.getElementById('downloadBtn').addEventListener('click', async ()=>{
   }
 
   const rows = [];
+  let firstItemDesc = null;
   for(const tr of itemRows){
     const qtyInput = tr.querySelector('.qty');
     const priceInput = tr.querySelector('.price');
@@ -500,6 +615,7 @@ document.getElementById('downloadBtn').addEventListener('click', async ()=>{
       priceInput.focus();
       return;
     }
+    if(firstItemDesc === null) firstItemDesc = desc;
     rows.push([String(qty), desc, formatCurrencyPdf(price), formatCurrencyPdf(qty*price)]);
   }
 
@@ -519,6 +635,21 @@ document.getElementById('downloadBtn').addEventListener('click', async ()=>{
     return;
   }
   const quoteNumberStr = String(quoteNumber).padStart(4,'0');
+
+  try {
+    await window.saveQuoteRecord({
+      number: quoteNumber,
+      numberStr: quoteNumberStr,
+      clientName,
+      clientId: clientId || null,
+      date: quoteDate,
+      firstItemDesc,
+      total,
+      createdByEmail: window.currentUserEmail || null
+    });
+  } catch(err){
+    showToast('Se generó el PDF, pero no se pudo guardar en Cotizaciones guardadas.');
+  }
 
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({unit:'mm', format:'a4'});
@@ -633,7 +764,7 @@ import {
   getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import {
-  getFirestore, doc, runTransaction
+  getFirestore, doc, runTransaction, setDoc, updateDoc, collection, query, where, onSnapshot, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -660,6 +791,133 @@ window.getNextQuoteNumber = async function(){
   return nextNumber;
 };
 
+/* ---------- Cotizaciones guardadas (Firestore) ---------- */
+const USER_NAMES = {
+  'francr2892@gmail.com': 'Francisco',
+  'leivjaim@gmail.com': 'Jaime'
+};
+
+window.saveQuoteRecord = async function(record){
+  const createdByName = USER_NAMES[record.createdByEmail] || record.createdByEmail || 'Desconocido';
+  await setDoc(doc(db, 'quotes', record.numberStr), {
+    number: record.number,
+    numberStr: record.numberStr,
+    clientName: record.clientName,
+    clientId: record.clientId || null,
+    date: record.date,
+    firstItemDesc: record.firstItemDesc,
+    total: record.total,
+    createdByEmail: record.createdByEmail,
+    createdByName,
+    status: 'pendiente',
+    createdAt: serverTimestamp()
+  });
+};
+
+window.markQuoteConfirmed = async function(quoteId){
+  await updateDoc(doc(db, 'quotes', quoteId), {
+    status: 'confirmada',
+    confirmedAt: serverTimestamp()
+  });
+};
+
+function escapeHtml(str){
+  return String(str==null ? '' : str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+let pendingQuotes = [];
+let confirmedQuotes = [];
+let quotesListenersStarted = false;
+
+function passesFilters(q){
+  const dateVal = document.getElementById('filterDate').value;
+  const clientVal = document.getElementById('filterClient').value.trim().toLowerCase();
+  if(dateVal && q.date !== dateVal) return false;
+  if(clientVal && !(q.clientName||'').toLowerCase().includes(clientVal)) return false;
+  return true;
+}
+
+function sortByCreatedAtDesc(a,b){
+  const ta = a.createdAt ? a.createdAt.toMillis() : 0;
+  const tb = b.createdAt ? b.createdAt.toMillis() : 0;
+  return tb - ta;
+}
+
+function quoteRowHtml(q, isPending){
+  const actionCell = isPending
+    ? `<button type="button" class="btn-confirm" data-id="${escapeHtml(q.id)}">Confirmada</button>`
+    : `<span class="badge-confirmed">✓ Confirmada</span>`;
+  return `
+    <tr>
+      <td>${escapeHtml(q.numberStr)}</td>
+      <td>${escapeHtml(q.clientName)}</td>
+      <td>${escapeHtml(q.firstItemDesc || '-')}</td>
+      <td>${q.date ? escapeHtml(formatDateEs(q.date)) : '-'}</td>
+      <td>${escapeHtml(formatCurrency(q.total))}</td>
+      <td>${escapeHtml(q.createdByName || '-')}</td>
+      <td>${actionCell}</td>
+    </tr>`;
+}
+
+function renderSavedQuotes(){
+  const pendingBody = document.getElementById('pendingQuotesBody');
+  const confirmedBody = document.getElementById('confirmedQuotesBody');
+  if(!pendingBody || !confirmedBody) return;
+
+  const filteredPending = pendingQuotes.filter(passesFilters).sort(sortByCreatedAtDesc);
+  const filteredConfirmed = confirmedQuotes.filter(passesFilters).sort(sortByCreatedAtDesc);
+
+  pendingBody.innerHTML = filteredPending.map(q => quoteRowHtml(q, true)).join('');
+  confirmedBody.innerHTML = filteredConfirmed.map(q => quoteRowHtml(q, false)).join('');
+
+  document.getElementById('pendingEmptyMsg').style.display = filteredPending.length ? 'none' : 'block';
+  document.getElementById('confirmedEmptyMsg').style.display = filteredConfirmed.length ? 'none' : 'block';
+
+  pendingBody.querySelectorAll('.btn-confirm').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      btn.disabled = true;
+      btn.textContent = '...';
+      try {
+        await window.markQuoteConfirmed(btn.dataset.id);
+      } catch(err){
+        showToast('No se pudo confirmar la cotización.');
+        btn.disabled = false;
+        btn.textContent = 'Confirmada';
+      }
+    });
+  });
+}
+
+let unsubscribeQuoteListeners = [];
+
+function stopQuotesListeners(){
+  unsubscribeQuoteListeners.forEach(unsub => unsub());
+  unsubscribeQuoteListeners = [];
+  quotesListenersStarted = false;
+}
+
+function startQuotesListeners(){
+  if(quotesListenersStarted) return;
+  quotesListenersStarted = true;
+
+  unsubscribeQuoteListeners.push(onSnapshot(query(collection(db, 'quotes'), where('status','==','pendiente')), (snap)=>{
+    pendingQuotes = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderSavedQuotes();
+  }));
+  unsubscribeQuoteListeners.push(onSnapshot(query(collection(db, 'quotes'), where('status','==','confirmada')), (snap)=>{
+    confirmedQuotes = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderSavedQuotes();
+  }));
+}
+
+document.getElementById('filterDate').addEventListener('input', renderSavedQuotes);
+document.getElementById('filterClient').addEventListener('input', renderSavedQuotes);
+document.getElementById('clearFiltersBtn').addEventListener('click', ()=>{
+  document.getElementById('filterDate').value = '';
+  document.getElementById('filterClient').value = '';
+  renderSavedQuotes();
+});
+
 const loginScreen = document.getElementById('loginScreen');
 const appContent = document.getElementById('appContent');
 const loginForm = document.getElementById('loginForm');
@@ -685,9 +943,15 @@ onAuthStateChanged(auth, (user) => {
     loginScreen.style.display = 'none';
     appContent.style.display = '';
     userEmailLabel.textContent = user.email;
+    window.currentUserEmail = user.email;
+    startQuotesListeners();
   } else {
     appContent.style.display = 'none';
     loginScreen.style.display = 'flex';
+    window.currentUserEmail = null;
+    stopQuotesListeners();
+    pendingQuotes = [];
+    confirmedQuotes = [];
   }
 });
 
