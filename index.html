@@ -203,6 +203,14 @@
     background:#ecfdf5;color:#047857;padding:5px 10px;border-radius:20px;font-size:12px;font-weight:600;
     white-space:nowrap;
   }
+
+  .portfolio-grid{
+    display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:4px;
+  }
+  @media (max-width:640px){.portfolio-grid{grid-template-columns:1fr 1fr;}}
+  .portfolio-grid figure{margin:0;border:1px solid var(--border);border-radius:10px;overflow:hidden;background:#fff;}
+  .portfolio-grid img{width:100%;height:120px;object-fit:cover;display:block;}
+  .portfolio-grid figcaption{padding:8px 10px;font-size:11.5px;color:var(--muted);line-height:1.3;}
 </style>
 </head>
 <body>
@@ -245,6 +253,7 @@
   <div class="tabs">
     <button class="tab-btn active" id="tabNewBtn" type="button">Nueva cotización</button>
     <button class="tab-btn" id="tabSavedBtn" type="button">Cotizaciones guardadas</button>
+    <button class="tab-btn" id="tabProposalBtn" type="button">Propuesta de servicios</button>
   </div>
 
   <div id="viewNewQuote">
@@ -379,6 +388,51 @@
         </table>
       </div>
       <p class="legend" id="confirmedEmptyMsg" style="display:none;">No hay cotizaciones confirmadas.</p>
+    </section>
+  </div>
+
+  <div id="viewProposal" style="display:none;">
+    <section class="card">
+      <h2><span class="dot"></span>Datos del destinatario</h2>
+      <div class="grid2">
+        <div class="field">
+          <label for="proposalCompany">Empresa *</label>
+          <input type="text" id="proposalCompany" placeholder="Nombre de la empresa">
+        </div>
+        <div class="field">
+          <label for="proposalContact">Contacto *</label>
+          <input type="text" id="proposalContact" placeholder="Nombre del contacto">
+        </div>
+      </div>
+      <div class="grid2">
+        <div class="field">
+          <label for="proposalDate">Fecha *</label>
+          <input type="date" id="proposalDate">
+        </div>
+        <div class="field">
+          <label for="proposalEmail">Correo del contacto (opcional)</label>
+          <input type="email" id="proposalEmail" placeholder="correo@empresa.com">
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2><span class="dot"></span>Proyectos recientes incluidos en la propuesta</h2>
+      <div class="portfolio-grid">
+        <figure><img src="assets/portfolio/sala-entretenimiento-1.jpg" alt="Sala de entretenimiento"><figcaption>Sala de entretenimiento residencial</figcaption></figure>
+        <figure><img src="assets/portfolio/sala-entretenimiento-2.jpg" alt="Sala multimedia"><figcaption>Sala multimedia residencial</figcaption></figure>
+        <figure><img src="assets/portfolio/proceso-limpieza.jpg" alt="Proceso de limpieza"><figcaption>Proceso de limpieza por extracción</figcaption></figure>
+        <figure><img src="assets/portfolio/agua-residual.jpg" alt="Agua residual extraída"><figcaption>Evidencia de extracción profunda</figcaption></figure>
+        <figure><img src="assets/portfolio/secado-1.jpg" alt="Secado asistido"><figcaption>Secado asistido con equipo especializado</figcaption></figure>
+        <figure><img src="assets/portfolio/secado-2.jpg" alt="Secado en área social"><figcaption>Área social — proceso de secado</figcaption></figure>
+      </div>
+      <p class="legend">Estas fotografías corresponden a proyectos reales recientes (nombres de clientes omitidos por confidencialidad).</p>
+    </section>
+
+    <section class="card">
+      <div class="actions">
+        <button class="btn-pdf" id="downloadProposalBtn" type="button">⬇ Descargar propuesta en PDF</button>
+      </div>
     </section>
   </div>
 </div>
@@ -545,27 +599,28 @@ function recalc(){
 
 document.getElementById('addRowBtn').addEventListener('click', addRow);
 document.getElementById('quoteDate').value = todayISO();
+document.getElementById('proposalDate').value = todayISO();
 
 addRow();
 recalc();
 
 /* ---------- Pestañas ---------- */
-const tabNewBtn = document.getElementById('tabNewBtn');
-const tabSavedBtn = document.getElementById('tabSavedBtn');
-const viewNewQuote = document.getElementById('viewNewQuote');
-const viewSavedQuotes = document.getElementById('viewSavedQuotes');
-
-tabNewBtn.addEventListener('click', ()=>{
-  viewNewQuote.style.display = '';
-  viewSavedQuotes.style.display = 'none';
-  tabNewBtn.classList.add('active');
-  tabSavedBtn.classList.remove('active');
-});
-tabSavedBtn.addEventListener('click', ()=>{
-  viewNewQuote.style.display = 'none';
-  viewSavedQuotes.style.display = '';
-  tabSavedBtn.classList.add('active');
-  tabNewBtn.classList.remove('active');
+const TABS = [
+  { btn: 'tabNewBtn', view: 'viewNewQuote' },
+  { btn: 'tabSavedBtn', view: 'viewSavedQuotes' },
+  { btn: 'tabProposalBtn', view: 'viewProposal' }
+];
+function activateTab(activeBtnId){
+  TABS.forEach(t=>{
+    const btn = document.getElementById(t.btn);
+    const view = document.getElementById(t.view);
+    const isActive = t.btn === activeBtnId;
+    view.style.display = isActive ? '' : 'none';
+    btn.classList.toggle('active', isActive);
+  });
+}
+TABS.forEach(t=>{
+  document.getElementById(t.btn).addEventListener('click', ()=>activateTab(t.btn));
 });
 
 /* ---------- Generar PDF ---------- */
@@ -754,6 +809,257 @@ document.getElementById('downloadBtn').addEventListener('click', async ()=>{
 
   downloadBtn.disabled = false;
   downloadBtn.textContent = '⬇ Descargar cotización en PDF';
+});
+
+/* ---------- Propuesta de servicios ---------- */
+const PROPOSAL_PORTFOLIO = [
+  { src: 'assets/portfolio/sala-entretenimiento-1.jpg', caption: 'Sala de entretenimiento residencial' },
+  { src: 'assets/portfolio/sala-entretenimiento-2.jpg', caption: 'Sala multimedia residencial' },
+  { src: 'assets/portfolio/proceso-limpieza.jpg', caption: 'Proceso de limpieza por extracción' },
+  { src: 'assets/portfolio/agua-residual.jpg', caption: 'Evidencia de extracción profunda' },
+  { src: 'assets/portfolio/secado-1.jpg', caption: 'Secado asistido con equipo especializado' },
+  { src: 'assets/portfolio/secado-2.jpg', caption: 'Área social — proceso de secado' }
+];
+
+const PROPOSAL_SERVICES = [
+  ['Limpieza estándar', 'Aspirado industrial, pretratamiento y lavado por extracción con secado asistido.'],
+  ['Limpieza profunda', 'Desmanchado, desodorización y tratamiento especializado en zonas de alto tránsito.'],
+  ['Desinfección y control de olores', 'Aplicación de producto sanitizante y neutralizador de olores.'],
+  ['Protector antimanchas', 'Reduce la absorción de líquidos y facilita el mantenimiento futuro.'],
+  ['Servicio express por derrames', 'Atención puntual e inmediata ante incidentes o manchas recientes.']
+];
+
+const PROPOSAL_PROCESS = [
+  'Diagnóstico y visita técnica sin costo.',
+  'Aspirado industrial y preparación del área.',
+  'Pretratamiento y lavado por inyección/extracción con agua caliente.',
+  'Desmanchado localizado en zonas de alto tránsito.',
+  'Secado asistido con equipo especializado (2 a 4 horas).',
+  'Inspección final de calidad.'
+];
+
+function loadImageAsCoverDataUrl(src, targetWpx, targetHpx){
+  return new Promise((resolve, reject)=>{
+    const img = new Image();
+    img.onload = ()=>{
+      const canvas = document.createElement('canvas');
+      canvas.width = targetWpx; canvas.height = targetHpx;
+      const ctx = canvas.getContext('2d');
+      const scale = Math.max(targetWpx / img.width, targetHpx / img.height);
+      const sw = targetWpx / scale, sh = targetHpx / scale;
+      const sx = (img.width - sw) / 2, sy = (img.height - sh) / 2;
+      ctx.drawImage(img, sx, sy, sw, sh, 0, 0, targetWpx, targetHpx);
+      resolve(canvas.toDataURL('image/jpeg', 0.85));
+    };
+    img.onerror = ()=>reject(new Error('No se pudo cargar ' + src));
+    img.src = src;
+  });
+}
+
+document.getElementById('downloadProposalBtn').addEventListener('click', async ()=>{
+  const company = document.getElementById('proposalCompany').value.trim();
+  const contact = document.getElementById('proposalContact').value.trim();
+  const pDate = document.getElementById('proposalDate').value;
+
+  if(!pDate){
+    showToast('Ingresá la fecha de la propuesta.');
+    document.getElementById('proposalDate').focus();
+    return;
+  }
+  if(!company){
+    showToast('Ingresá el nombre de la empresa.');
+    document.getElementById('proposalCompany').focus();
+    return;
+  }
+  if(!contact){
+    showToast('Ingresá el nombre del contacto.');
+    document.getElementById('proposalContact').focus();
+    return;
+  }
+
+  const proposalBtn = document.getElementById('downloadProposalBtn');
+  proposalBtn.disabled = true;
+  proposalBtn.textContent = 'Generando...';
+
+  try {
+    const photoDataUrls = await Promise.all(
+      PROPOSAL_PORTFOLIO.map(p => loadImageAsCoverDataUrl(p.src, 340, 230))
+    );
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({unit:'mm', format:'a4'});
+    const pageW = doc.internal.pageSize.getWidth();
+    const pageH = doc.internal.pageSize.getHeight();
+    const marginX = 15;
+    const bottomLimit = pageH - 26;
+    let y;
+
+    function addFooter(){
+      doc.setDrawColor(226,232,240);
+      doc.line(marginX, pageH - 22, pageW - marginX, pageH - 22);
+      doc.setFont('helvetica','bold');
+      doc.setFontSize(9);
+      doc.setTextColor(10,59,56);
+      doc.text('Jaime Rodríguez Leiva', marginX, pageH - 16);
+      doc.setFont('helvetica','normal');
+      doc.setTextColor(107,114,128);
+      doc.text('Cédula 1-1422-0005   •   leivjaim@gmail.com   •   Cel 7010-1123', marginX, pageH - 11);
+    }
+
+    function ensureSpace(neededMm){
+      if(y + neededMm > bottomLimit){
+        addFooter();
+        doc.addPage();
+        y = 20;
+      }
+    }
+
+    // Encabezado
+    doc.addImage(logoDataUrl, 'PNG', marginX, 14, 22, 22);
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(20);
+    doc.setTextColor(10,59,56);
+    doc.text('CleanCarpet', marginX + 27, 25);
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(9.5);
+    doc.setTextColor(107,114,128);
+    doc.text('Limpieza profesional de alfombras y textiles', marginX + 27, 31);
+
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(15);
+    doc.setTextColor(15,118,110);
+    doc.text('PROPUESTA DE SERVICIOS', pageW - marginX, 20, {align:'right'});
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(10);
+    doc.setTextColor(31,41,55);
+    doc.text('Fecha: ' + formatDateEs(pDate), pageW - marginX, 27, {align:'right'});
+
+    doc.setDrawColor(226,232,240);
+    doc.setLineWidth(0.4);
+    doc.line(marginX, 40, pageW - marginX, 40);
+
+    y = 48;
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(11);
+    doc.setTextColor(10,59,56);
+    doc.text('Para', marginX, y);
+    y += 7;
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(10.5);
+    doc.setTextColor(31,41,55);
+    doc.text(contact + '  —  ' + company, marginX, y);
+    y += 12;
+
+    const introText = 'CleanCarpet es una empresa costarricense especializada en la limpieza profesional, desinfección y mantenimiento de alfombras, tapetes y textiles. Combinamos equipo de extracción profesional, productos certificados y protocolos estandarizados para devolverle a sus espacios su mejor apariencia, higiene y vida útil, con atención puntual y resultados medibles.';
+    doc.setFontSize(10.5);
+    const introLines = doc.splitTextToSize(introText, pageW - marginX*2);
+    doc.text(introLines, marginX, y);
+    y += introLines.length * 5.2 + 10;
+
+    ensureSpace(14);
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(13);
+    doc.setTextColor(15,118,110);
+    doc.text('Nuestros servicios', marginX, y);
+    y += 9;
+
+    PROPOSAL_SERVICES.forEach(([title, desc])=>{
+      const descLines = doc.splitTextToSize(desc, pageW - marginX*2 - 4);
+      ensureSpace(6 + descLines.length * 5);
+      doc.setFont('helvetica','bold');
+      doc.setFontSize(10.5);
+      doc.setTextColor(10,59,56);
+      doc.text('• ' + title, marginX, y);
+      y += 5.5;
+      doc.setFont('helvetica','normal');
+      doc.setFontSize(10);
+      doc.setTextColor(75,85,99);
+      doc.text(descLines, marginX + 4, y);
+      y += descLines.length * 5 + 4;
+    });
+
+    y += 4;
+    ensureSpace(14);
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(13);
+    doc.setTextColor(15,118,110);
+    doc.text('Nuestro proceso', marginX, y);
+    y += 9;
+
+    PROPOSAL_PROCESS.forEach((step, i)=>{
+      ensureSpace(7);
+      doc.setFont('helvetica','bold');
+      doc.setFontSize(10);
+      doc.setTextColor(15,118,110);
+      doc.text(String(i+1) + '.', marginX, y);
+      doc.setFont('helvetica','normal');
+      doc.setTextColor(31,41,55);
+      doc.text(step, marginX + 7, y);
+      y += 6.5;
+    });
+
+    // Portafolio (siempre en página nueva para que se vea ordenado)
+    addFooter();
+    doc.addPage();
+    y = 20;
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(13);
+    doc.setTextColor(15,118,110);
+    doc.text('Proyectos recientes', marginX, y);
+    y += 4;
+    doc.setFont('helvetica','italic');
+    doc.setFontSize(9);
+    doc.setTextColor(107,114,128);
+    doc.text('Evidencia fotográfica de trabajos realizados (nombres de clientes omitidos por confidencialidad).', marginX, y + 5);
+    y += 12;
+
+    const colW = (pageW - marginX*2 - 10) / 2;
+    const imgH = 42;
+    const rowH = imgH + 10;
+    let col = 0;
+    photoDataUrls.forEach((dataUrl, i)=>{
+      const x = marginX + col * (colW + 10);
+      doc.addImage(dataUrl, 'JPEG', x, y, colW, imgH, undefined, 'FAST');
+      doc.setFont('helvetica','normal');
+      doc.setFontSize(9);
+      doc.setTextColor(75,85,99);
+      doc.text(PROPOSAL_PORTFOLIO[i].caption, x, y + imgH + 5, {maxWidth: colW});
+      col++;
+      if(col === 2){
+        col = 0;
+        y += rowH;
+      }
+    });
+    if(col !== 0) y += rowH;
+    y += 6;
+
+    ensureSpace(30);
+    doc.setDrawColor(226,232,240);
+    doc.setLineWidth(0.4);
+    doc.line(marginX, y, pageW - marginX, y);
+    y += 10;
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(12);
+    doc.setTextColor(15,118,110);
+    doc.text('Visita técnica sin costo', marginX, y);
+    y += 7;
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(10.5);
+    doc.setTextColor(31,41,55);
+    const ctaText = 'Le ofrecemos una visita técnica sin costo ni compromiso, para evaluar el estado de sus alfombras y textiles, medir las áreas a intervenir y presentar una cotización formal ajustada a sus necesidades.';
+    const ctaLines = doc.splitTextToSize(ctaText, pageW - marginX*2);
+    doc.text(ctaLines, marginX, y);
+
+    addFooter();
+
+    const safeCompany = company.replace(/[^a-z0-9áéíóúñ]+/gi,'_');
+    doc.save(`Propuesta_CleanCarpet_${safeCompany}_${pDate}.pdf`);
+  } catch(err){
+    showToast('No se pudo generar la propuesta. Intentá de nuevo.');
+  } finally {
+    proposalBtn.disabled = false;
+    proposalBtn.textContent = '⬇ Descargar propuesta en PDF';
+  }
 });
 </script>
 
