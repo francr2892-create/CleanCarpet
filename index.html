@@ -109,6 +109,11 @@
   .totals td{padding:6px 4px;font-size:14px;}
   .totals td.label{color:var(--muted);text-align:right;padding-right:18px;}
   .totals td.val{text-align:right;font-weight:600;min-width:120px;}
+  .totals input.discount{
+    width:64px;border:1px solid var(--border);border-radius:6px;padding:5px 8px;text-align:right;
+    font-size:14px;font-family:inherit;color:var(--ink);
+  }
+  .totals input.discount:focus{outline:none;border-color:var(--cyan-500);box-shadow:0 0 0 3px var(--cyan-100);}
   .totals tr.total td{border-top:2px solid var(--teal-700);}
   .totals tr.total td.label{color:var(--teal-900);font-weight:700;font-size:15px;}
   .totals tr.total td.val{color:var(--teal-700);font-weight:700;font-size:18px;}
@@ -311,6 +316,14 @@
         <tr>
           <td class="label">Subtotal</td>
           <td class="val" id="totSubtotal">₡0,00</td>
+        </tr>
+        <tr>
+          <td class="label">Descuento (%) <input type="number" class="discount" id="discountPct" min="0" max="100" step="0.01" placeholder="0"></td>
+          <td class="val" id="totDiscount">₡0,00</td>
+        </tr>
+        <tr id="rowSubAfterDiscount" style="display:none;">
+          <td class="label">Subtotal con descuento</td>
+          <td class="val" id="totSubAfterDiscount">₡0,00</td>
         </tr>
         <tr>
           <td class="label">IVA (13%)</td>
@@ -588,13 +601,20 @@ function recalc(){
     tr.querySelector('.subtotal-cell').textContent = formatCurrency(sub);
     subtotal += sub;
   });
-  const iva = subtotal * 0.13;
-  const total = subtotal + iva;
+  const discountPct = Math.min(100, Math.max(0, parseFloat(document.getElementById('discountPct').value) || 0));
+  const discount = subtotal * discountPct / 100;
+  const subAfterDiscount = subtotal - discount;
+  const iva = subAfterDiscount * 0.13;
+  const total = subAfterDiscount + iva;
   document.getElementById('totSubtotal').textContent = formatCurrency(subtotal);
+  document.getElementById('totDiscount').textContent = discount > 0 ? '-' + formatCurrency(discount) : formatCurrency(0);
+  document.getElementById('rowSubAfterDiscount').style.display = discount > 0 ? '' : 'none';
+  document.getElementById('totSubAfterDiscount').textContent = formatCurrency(subAfterDiscount);
   document.getElementById('totIva').textContent = formatCurrency(iva);
   document.getElementById('totTotal').textContent = formatCurrency(total);
-  return {subtotal, iva, total};
+  return {subtotal, discountPct, discount, subAfterDiscount, iva, total};
 }
+document.getElementById('discountPct').addEventListener('input', recalc);
 
 document.getElementById('addRowBtn').addEventListener('click', addRow);
 document.getElementById('quoteDate').value = todayISO();
@@ -673,7 +693,7 @@ document.getElementById('downloadBtn').addEventListener('click', async ()=>{
     rows.push([String(qty), desc, formatCurrencyPdf(price), formatCurrencyPdf(qty*price)]);
   }
 
-  const {subtotal, iva, total} = recalc();
+  const {subtotal, discountPct, discount, subAfterDiscount, iva, total} = recalc();
 
   const downloadBtn = document.getElementById('downloadBtn');
   downloadBtn.disabled = true;
@@ -779,6 +799,11 @@ document.getElementById('downloadBtn').addEventListener('click', async ()=>{
     y += bold ? 8 : 6.5;
   }
   totalLine('Subtotal', formatCurrencyPdf(subtotal), false, 10.5, [75,85,99]);
+  if(discount > 0){
+    const pctStr = String(Math.round(discountPct*100)/100).replace('.',',');
+    totalLine('Descuento (' + pctStr + '%)', '-' + formatCurrencyPdf(discount), false, 10.5, [75,85,99]);
+    totalLine('Subtotal con descuento', formatCurrencyPdf(subAfterDiscount), false, 10.5, [75,85,99]);
+  }
   totalLine('IVA (13%)', formatCurrencyPdf(iva), false, 10.5, [75,85,99]);
   doc.setDrawColor(15,118,110);
   doc.setLineWidth(0.5);
