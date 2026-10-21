@@ -1149,6 +1149,12 @@ document.getElementById('downloadProposalBtn').addEventListener('click', async (
 
 /* ---------- Datos de pago (PDF / imagen) ---------- */
 const PAY_STORE_KEY = 'cleancarpet_payment_v1';
+const PAY_DEFAULTS = {
+  name: 'Jaime Esteban Rodríguez Leiva',
+  cedula: '1-1422-0005',
+  email: 'leivjaim@gmail.com',
+  phone: '8810-1123'
+};
 const payAccountsList = document.getElementById('payAccountsList');
 
 function addPayAccount(bank, number){
@@ -1193,13 +1199,12 @@ function savePayData(){
 (function loadPayData(){
   let d = null;
   try{ d = JSON.parse(localStorage.getItem(PAY_STORE_KEY) || 'null'); }catch(e){}
-  if(d){
-    document.getElementById('payName').value = d.name || '';
-    document.getElementById('payCedula').value = d.cedula || '';
-    document.getElementById('payEmail').value = d.email || '';
-    document.getElementById('payPhone').value = d.phone || '';
-    (d.accounts || []).forEach(a=>addPayAccount(a.bank, a.number));
-  }
+  const pick = (k)=> (d && typeof d[k] === 'string') ? d[k] : PAY_DEFAULTS[k];
+  document.getElementById('payName').value = pick('name');
+  document.getElementById('payCedula').value = pick('cedula');
+  document.getElementById('payEmail').value = pick('email');
+  document.getElementById('payPhone').value = pick('phone');
+  if(d) (d.accounts || []).forEach(a=>addPayAccount(a.bank, a.number));
   if(!payAccountsList.children.length) addPayAccount();
 })();
 ['payName','payCedula','payEmail','payPhone'].forEach(id=>{
