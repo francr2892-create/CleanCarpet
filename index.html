@@ -1153,7 +1153,11 @@ const PAY_DEFAULTS = {
   name: 'Jaime Esteban Rodríguez Leiva',
   cedula: '1-1422-0005',
   email: 'leivjaim@gmail.com',
-  phone: '8810-1123'
+  phone: '8810-1123',
+  accounts: [
+    { bank: 'BAC', number: '941281743' },
+    { bank: 'BAC (IBAN)', number: 'CR45010200009412817438' }
+  ]
 };
 const payAccountsList = document.getElementById('payAccountsList');
 
@@ -1204,7 +1208,8 @@ function savePayData(){
   document.getElementById('payCedula').value = pick('cedula');
   document.getElementById('payEmail').value = pick('email');
   document.getElementById('payPhone').value = pick('phone');
-  if(d) (d.accounts || []).forEach(a=>addPayAccount(a.bank, a.number));
+  const savedAcc = (d && Array.isArray(d.accounts) && d.accounts.length) ? d.accounts : PAY_DEFAULTS.accounts;
+  savedAcc.forEach(a=>addPayAccount(a.bank, a.number));
   if(!payAccountsList.children.length) addPayAccount();
 })();
 ['payName','payCedula','payEmail','payPhone'].forEach(id=>{
