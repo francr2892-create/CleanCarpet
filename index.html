@@ -180,7 +180,18 @@
   }
   .login-error.show{display:block;}
 
-  .tabs{display:flex;gap:8px;margin-bottom:22px;}
+  .pay-account{display:grid;grid-template-columns:1fr 1.6fr 36px;gap:10px;align-items:end;margin-bottom:12px;}
+  @media (max-width:640px){.pay-account{grid-template-columns:1fr 36px;}.pay-account .field.acc-num{grid-column:1 / 2;}}
+  .pay-account .btn-del{height:42px;}
+  .pay-actions{display:flex;justify-content:flex-end;gap:12px;flex-wrap:wrap;margin-top:8px;}
+  .btn-sec{
+    background:#fff;color:var(--teal-700);border:1.5px solid var(--teal-600);padding:12px 24px;border-radius:10px;
+    font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;
+  }
+  .btn-sec:hover{background:#f0fdfa;}
+  .btn-sec:disabled{opacity:.6;cursor:not-allowed;}
+
+  .tabs{display:flex;gap:8px;margin-bottom:22px;flex-wrap:wrap;}
   .tab-btn{
     background:#fff;border:1px solid var(--border);color:var(--muted);
     padding:10px 18px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;
@@ -259,6 +270,7 @@
     <button class="tab-btn active" id="tabNewBtn" type="button">Nueva cotización</button>
     <button class="tab-btn" id="tabSavedBtn" type="button">Cotizaciones guardadas</button>
     <button class="tab-btn" id="tabProposalBtn" type="button">Propuesta de servicios</button>
+    <button class="tab-btn" id="tabPaymentBtn" type="button">Datos de pago</button>
   </div>
 
   <div id="viewNewQuote">
@@ -447,6 +459,54 @@
       </div>
     </section>
   </div>
+
+  <div id="viewPayment" style="display:none;">
+    <section class="card">
+      <h2><span class="dot"></span>Cliente</h2>
+      <div class="field">
+        <label for="payClient">Estimado *</label>
+        <input type="text" id="payClient" placeholder="Nombre del cliente">
+      </div>
+    </section>
+
+    <section class="card">
+      <h2><span class="dot"></span>Datos para el pago</h2>
+      <div class="grid2">
+        <div class="field">
+          <label for="payName">Nombre</label>
+          <input type="text" id="payName" placeholder="Nombre del beneficiario">
+        </div>
+        <div class="field">
+          <label for="payCedula">Cédula</label>
+          <input type="text" id="payCedula" placeholder="Ej. 1-1234-5678">
+        </div>
+      </div>
+      <div class="grid2" style="margin-top:18px;">
+        <div class="field">
+          <label for="payEmail">Correo</label>
+          <input type="email" id="payEmail" placeholder="correo@ejemplo.com">
+        </div>
+        <div class="field">
+          <label for="payPhone">Número de teléfono</label>
+          <input type="tel" id="payPhone" placeholder="Ej. 7047-5375">
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2><span class="dot"></span>Números de cuenta</h2>
+      <div id="payAccountsList"></div>
+      <button class="add-row" id="payAddAccountBtn" type="button">+ Agregar cuenta</button>
+      <p class="legend">Los datos del beneficiario y las cuentas quedan guardados en este dispositivo para no volver a escribirlos.</p>
+    </section>
+
+    <section class="card">
+      <div class="pay-actions">
+        <button class="btn-sec" id="payCopyImgBtn" type="button">📋 Copiar imagen</button>
+        <button class="btn-pdf" id="payPdfBtn" type="button">⬇ Descargar PDF</button>
+      </div>
+    </section>
+  </div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -627,7 +687,8 @@ recalc();
 const TABS = [
   { btn: 'tabNewBtn', view: 'viewNewQuote' },
   { btn: 'tabSavedBtn', view: 'viewSavedQuotes' },
-  { btn: 'tabProposalBtn', view: 'viewProposal' }
+  { btn: 'tabProposalBtn', view: 'viewProposal' },
+  { btn: 'tabPaymentBtn', view: 'viewPayment' }
 ];
 function activateTab(activeBtnId){
   TABS.forEach(t=>{
@@ -1083,6 +1144,329 @@ document.getElementById('downloadProposalBtn').addEventListener('click', async (
   } finally {
     proposalBtn.disabled = false;
     proposalBtn.textContent = '⬇ Descargar propuesta en PDF';
+  }
+});
+
+/* ---------- Datos de pago (PDF / imagen) ---------- */
+const PAY_STORE_KEY = 'cleancarpet_payment_v1';
+const payAccountsList = document.getElementById('payAccountsList');
+
+function addPayAccount(bank, number){
+  const row = document.createElement('div');
+  row.className = 'pay-account';
+  row.innerHTML = `
+    <div class="field"><label>Banco</label><input type="text" class="pay-bank" placeholder="Ej. Banco Nacional"></div>
+    <div class="field acc-num"><label>Número de cuenta</label><input type="text" class="pay-number" placeholder="Cuenta / IBAN / SINPE"></div>
+    <button type="button" class="btn-del" title="Eliminar cuenta">✕</button>
+  `;
+  row.querySelector('.pay-bank').value = bank || '';
+  row.querySelector('.pay-number').value = number || '';
+  row.querySelector('.btn-del').addEventListener('click', ()=>{
+    row.remove();
+    if(!payAccountsList.children.length) addPayAccount();
+    savePayData();
+  });
+  row.addEventListener('input', savePayData);
+  payAccountsList.appendChild(row);
+}
+
+function readPayData(){
+  const val = id => document.getElementById(id).value.trim();
+  const accounts = [...payAccountsList.querySelectorAll('.pay-account')].map(r=>({
+    bank: r.querySelector('.pay-bank').value.trim(),
+    number: r.querySelector('.pay-number').value.trim()
+  }));
+  return {
+    client: val('payClient'), name: val('payName'), cedula: val('payCedula'),
+    email: val('payEmail'), phone: val('payPhone'), accounts
+  };
+}
+
+function savePayData(){
+  try{
+    const d = readPayData();
+    delete d.client;
+    localStorage.setItem(PAY_STORE_KEY, JSON.stringify(d));
+  }catch(e){}
+}
+
+(function loadPayData(){
+  let d = null;
+  try{ d = JSON.parse(localStorage.getItem(PAY_STORE_KEY) || 'null'); }catch(e){}
+  if(d){
+    document.getElementById('payName').value = d.name || '';
+    document.getElementById('payCedula').value = d.cedula || '';
+    document.getElementById('payEmail').value = d.email || '';
+    document.getElementById('payPhone').value = d.phone || '';
+    (d.accounts || []).forEach(a=>addPayAccount(a.bank, a.number));
+  }
+  if(!payAccountsList.children.length) addPayAccount();
+})();
+['payName','payCedula','payEmail','payPhone'].forEach(id=>{
+  document.getElementById(id).addEventListener('input', savePayData);
+});
+document.getElementById('payAddAccountBtn').addEventListener('click', ()=>addPayAccount());
+
+// Devuelve los datos listos para imprimir, o null (con aviso) si falta algo obligatorio
+function getValidPayData(){
+  const d = readPayData();
+  if(!d.client){
+    showToast('Ingresá el nombre del cliente (Estimado).');
+    document.getElementById('payClient').focus();
+    return null;
+  }
+  d.accounts = d.accounts.filter(a=>a.bank || a.number);
+  if(!d.accounts.length){
+    showToast('Agregá al menos una cuenta con banco y número.');
+    return null;
+  }
+  d.fields = [
+    ['Nombre', d.name], ['Cédula', d.cedula], ['Correo', d.email], ['Número de teléfono', d.phone]
+  ].filter(f=>f[1]);
+  return d;
+}
+
+const PAY_INTRO = 'Para realizar su pago, puede depositar o transferir a la siguiente información:';
+
+document.getElementById('payPdfBtn').addEventListener('click', ()=>{
+  const d = getValidPayData();
+  if(!d) return;
+  const btn = document.getElementById('payPdfBtn');
+  btn.disabled = true;
+  try{
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({unit:'mm', format:'a4'});
+    const pageW = doc.internal.pageSize.getWidth();
+    const pageH = doc.internal.pageSize.getHeight();
+    const marginX = 15;
+    const maxW = pageW - marginX*2;
+
+    doc.addImage(logoDataUrl, 'PNG', marginX, 14, 22, 22);
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(20);
+    doc.setTextColor(10,59,56);
+    doc.text('CleanCarpet', marginX + 27, 25);
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(9.5);
+    doc.setTextColor(107,114,128);
+    doc.text('Limpieza profesional de alfombras y textiles', marginX + 27, 31);
+    doc.setDrawColor(226,232,240);
+    doc.setLineWidth(0.4);
+    doc.line(marginX, 40, pageW - marginX, 40);
+
+    let y = 54;
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(14);
+    doc.setTextColor(10,59,56);
+    const estLabel = 'Estimado: ';
+    doc.text(estLabel, marginX, y);
+    const estW = doc.getTextWidth(estLabel);
+    doc.setTextColor(31,41,55);
+    const nameLines = doc.splitTextToSize(d.client, maxW - estW);
+    doc.text(nameLines, marginX + estW, y);
+    y += nameLines.length * 6.5 + 4;
+
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(10.5);
+    doc.setTextColor(75,85,99);
+    const introLines = doc.splitTextToSize(PAY_INTRO, maxW);
+    doc.text(introLines, marginX, y);
+    y += introLines.length * 5.5 + 8;
+
+    d.fields.forEach(([label, value])=>{
+      doc.setFont('helvetica','bold');
+      doc.setFontSize(11);
+      doc.setTextColor(10,59,56);
+      const lw = doc.getTextWidth(label + ': ');
+      doc.text(label + ': ', marginX, y);
+      doc.setFont('helvetica','normal');
+      doc.setTextColor(31,41,55);
+      const vLines = doc.splitTextToSize(value, maxW - lw);
+      doc.text(vLines, marginX + lw, y);
+      y += vLines.length * 5.8 + 2.5;
+    });
+
+    y += 5;
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(12);
+    doc.setTextColor(15,118,110);
+    doc.text('Números de cuenta:', marginX, y);
+    y += 6;
+
+    d.accounts.forEach(a=>{
+      const numLines = doc.splitTextToSize(a.number || '', maxW - 12);
+      const boxH = 11 + Math.max(1, numLines.length) * 6;
+      if(y + boxH > pageH - 20){ doc.addPage(); y = 20; }
+      doc.setFillColor(240,253,250);
+      doc.setDrawColor(204,236,232);
+      doc.roundedRect(marginX, y, maxW, boxH, 2, 2, 'FD');
+      doc.setFont('helvetica','bold');
+      doc.setFontSize(11);
+      doc.setTextColor(10,59,56);
+      doc.text(a.bank || '—', marginX + 6, y + 7);
+      doc.setFont('helvetica','normal');
+      doc.setFontSize(11.5);
+      doc.setTextColor(31,41,55);
+      doc.text(numLines, marginX + 6, y + 14);
+      y += boxH + 5;
+    });
+
+    const safeClient = d.client.replace(/[^a-z0-9áéíóúñ]+/gi,'_');
+    doc.save(`Datos_de_pago_CleanCarpet_${safeClient}.pdf`);
+  } catch(err){
+    showToast('No se pudo generar el PDF. Intentá de nuevo.');
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+async function renderPayCanvas(d){
+  if(document.fonts && document.fonts.ready){ try{ await document.fonts.ready; }catch(e){} }
+  const logo = new Image();
+  logo.src = logoDataUrl;
+  try{ await logo.decode(); }catch(e){}
+
+  const W = 820, pad = 40, scale = 2, innerW = W - pad*2;
+  const FONT = "'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif";
+  const HEAD = "'Poppins', 'Inter', system-ui, sans-serif";
+
+  function wrap(ctx, text, maxWidth){
+    const out = [];
+    String(text).split('\n').forEach(par=>{
+      let line = '';
+      par.split(/\s+/).forEach(word=>{
+        const test = line ? line + ' ' + word : word;
+        if(line && ctx.measureText(test).width > maxWidth){ out.push(line); line = word; }
+        else line = test;
+      });
+      out.push(line);
+    });
+    return out;
+  }
+
+  // Un solo recorrido sirve para medir (draw=false) y para dibujar (draw=true)
+  function paint(ctx, draw){
+    let y = pad;
+    if(draw){ ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, W, 4000); }
+
+    if(draw){ try{ ctx.drawImage(logo, pad, y, 64, 64); }catch(e){} }
+    ctx.textBaseline = 'alphabetic';
+    if(draw){
+      ctx.fillStyle = '#0a3b38'; ctx.font = `700 30px ${HEAD}`;
+      ctx.fillText('CleanCarpet', pad + 80, y + 32);
+      ctx.fillStyle = '#6b7280'; ctx.font = `400 14px ${FONT}`;
+      ctx.fillText('Limpieza profesional de alfombras y textiles', pad + 80, y + 55);
+    }
+    y += 64 + 18;
+    if(draw){ ctx.fillStyle = '#e2e8f0'; ctx.fillRect(pad, y, innerW, 1.5); }
+    y += 34;
+
+    // Estimado: nombre
+    ctx.font = `700 22px ${FONT}`;
+    const estLabel = 'Estimado: ';
+    const estW = ctx.measureText(estLabel).width;
+    const nameLines = wrap(ctx, d.client, innerW - estW);
+    nameLines.forEach((ln, i)=>{
+      if(draw){
+        ctx.font = `700 22px ${FONT}`;
+        if(i === 0){ ctx.fillStyle = '#0a3b38'; ctx.fillText(estLabel, pad, y); }
+        ctx.fillStyle = '#1f2937';
+        ctx.fillText(ln, pad + estW, y);
+      }
+      y += 30;
+    });
+    y += 2;
+
+    ctx.font = `400 16px ${FONT}`;
+    wrap(ctx, PAY_INTRO, innerW).forEach(ln=>{
+      if(draw){ ctx.fillStyle = '#4b5563'; ctx.fillText(ln, pad, y); }
+      y += 24;
+    });
+    y += 14;
+
+    d.fields.forEach(([label, value])=>{
+      ctx.font = `700 17px ${FONT}`;
+      const lw = ctx.measureText(label + ': ').width;
+      ctx.font = `400 17px ${FONT}`;
+      wrap(ctx, value, innerW - lw).forEach((ln, i)=>{
+        if(draw){
+          if(i === 0){ ctx.font = `700 17px ${FONT}`; ctx.fillStyle = '#0a3b38'; ctx.fillText(label + ': ', pad, y); }
+          ctx.font = `400 17px ${FONT}`; ctx.fillStyle = '#1f2937'; ctx.fillText(ln, pad + lw, y);
+        }
+        y += 26;
+      });
+      y += 4;
+    });
+
+    y += 14;
+    if(draw){ ctx.font = `700 19px ${HEAD}`; ctx.fillStyle = '#0f766e'; ctx.fillText('Números de cuenta:', pad, y); }
+    y += 20;
+
+    d.accounts.forEach(a=>{
+      ctx.font = `400 18px ${FONT}`;
+      const numLines = wrap(ctx, a.number || '', innerW - 40);
+      const boxH = 22 + 26 + Math.max(1, numLines.length) * 26;
+      if(draw){
+        ctx.fillStyle = '#f0fdfa'; ctx.strokeStyle = '#ccece8'; ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        if(ctx.roundRect) ctx.roundRect(pad, y, innerW, boxH, 12); else ctx.rect(pad, y, innerW, boxH);
+        ctx.fill(); ctx.stroke();
+        ctx.font = `700 17px ${FONT}`; ctx.fillStyle = '#0a3b38';
+        ctx.fillText(a.bank || '—', pad + 20, y + 32);
+        ctx.font = `400 18px ${FONT}`; ctx.fillStyle = '#1f2937';
+        numLines.forEach((ln, i)=> ctx.fillText(ln, pad + 20, y + 62 + i*26));
+      }
+      y += boxH + 14;
+    });
+
+    return y + pad - 14;
+  }
+
+  const probe = document.createElement('canvas').getContext('2d');
+  const H = Math.ceil(paint(probe, false));
+  const canvas = document.createElement('canvas');
+  canvas.width = W * scale;
+  canvas.height = H * scale;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(scale, scale);
+  paint(ctx, true);
+  return canvas;
+}
+
+document.getElementById('payCopyImgBtn').addEventListener('click', async ()=>{
+  const d = getValidPayData();
+  if(!d) return;
+  const btn = document.getElementById('payCopyImgBtn');
+  btn.disabled = true;
+  const safeClient = d.client.replace(/[^a-z0-9áéíóúñ]+/gi,'_');
+  const makeBlob = async ()=>{
+    const canvas = await renderPayCanvas(d);
+    return await new Promise((res, rej)=>canvas.toBlob(b=> b ? res(b) : rej(new Error('blob')), 'image/png'));
+  };
+  const downloadBlob = blob=>{
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `Datos_de_pago_CleanCarpet_${safeClient}.png`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url), 2000);
+  };
+  try{
+    if(navigator.clipboard && window.ClipboardItem){
+      await navigator.clipboard.write([new ClipboardItem({'image/png': makeBlob()})]);
+      showToast('Imagen copiada. Ya podés pegarla en el chat.');
+    } else {
+      downloadBlob(await makeBlob());
+      showToast('Tu navegador no permite copiar; se descargó la imagen.');
+    }
+  } catch(err){
+    try{
+      downloadBlob(await makeBlob());
+      showToast('No se pudo copiar; se descargó la imagen.');
+    } catch(e2){
+      showToast('No se pudo generar la imagen. Intentá de nuevo.');
+    }
+  } finally {
+    btn.disabled = false;
   }
 });
 </script>
