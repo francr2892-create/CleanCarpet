@@ -220,6 +220,64 @@
     white-space:nowrap;
   }
 
+  /* Balance de trabajos */
+  .field select{
+    width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;
+    font-size:14.5px;font-family:inherit;color:var(--ink);background:#fbfdfd;
+  }
+  .field select:focus{outline:none;border-color:var(--cyan-500);box-shadow:0 0 0 3px var(--cyan-100);background:#fff;}
+  .exp-row{display:grid;grid-template-columns:1fr 160px 36px;gap:10px;align-items:end;margin-bottom:12px;}
+  @media (max-width:640px){
+    .exp-row{grid-template-columns:1fr 36px;}
+    .exp-row .exp-desc{grid-column:1 / -1;}
+  }
+  .exp-row .btn-del{height:42px;}
+  .bal-live{
+    margin-top:18px;background:#f7fafa;border:1px dashed var(--border);border-radius:10px;padding:14px 16px;
+    font-size:14px;display:grid;gap:6px;
+  }
+  .bal-live div{display:flex;justify-content:space-between;gap:12px;}
+  .bal-live .k{color:var(--muted);}
+  .bal-live .v{font-weight:600;}
+  .bal-live .profit{border-top:1px solid var(--border);padding-top:8px;margin-top:2px;font-size:15.5px;}
+  .bal-live .profit .k{color:var(--teal-900);font-weight:700;}
+  .bal-live .profit .v{color:var(--teal-700);font-weight:700;}
+  .neg{color:var(--danger) !important;}
+  .bal-status{font-size:12.5px;color:var(--muted);margin:-6px 0 18px;}
+  .bal-status.warn{color:#b45309;}
+  .job-card{
+    border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin-bottom:14px;background:#fff;
+  }
+  .job-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:10px;}
+  .job-head .job-client{font-weight:700;color:var(--teal-900);font-size:15.5px;}
+  .job-head .job-date{display:block;font-size:12.5px;color:var(--muted);margin-top:2px;}
+  .badge-inv{
+    background:#ecfdf5;color:#047857;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:600;white-space:nowrap;
+  }
+  .badge-inv.no{background:#f1f5f9;color:#475569;}
+  .job-table{width:100%;border-collapse:collapse;font-size:14px;}
+  .job-table td{padding:4px 0;}
+  .job-table td.k{color:var(--muted);}
+  .job-table td.v{text-align:right;font-weight:600;}
+  .job-table tr.profit td{border-top:1px solid var(--border);padding-top:8px;font-size:15px;}
+  .job-table tr.profit td.k{color:var(--teal-900);font-weight:700;}
+  .job-table tr.profit td.v{color:var(--teal-700);font-weight:700;}
+  .job-exp{margin:8px 0 0;padding:8px 12px;background:#f7fafa;border-radius:8px;font-size:13px;color:var(--muted);}
+  .job-exp div{display:flex;justify-content:space-between;gap:12px;padding:2px 0;}
+  .job-actions{display:flex;gap:10px;margin-top:12px;}
+  .btn-mini{
+    background:#fff;border:1px solid var(--border);color:var(--teal-700);padding:6px 14px;border-radius:8px;
+    font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;
+  }
+  .btn-mini:hover{border-color:var(--teal-600);}
+  .btn-mini.danger{color:var(--danger);}
+  .btn-mini.danger:hover{border-color:var(--danger);background:var(--danger-bg);}
+  .split-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px;}
+  @media (max-width:640px){.split-grid{grid-template-columns:1fr;}}
+  .split-box{background:#f0fdfa;border:1px solid #ccece8;border-radius:12px;padding:14px 16px;}
+  .split-box .who{font-size:12.5px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;}
+  .split-box .amt{font-size:22px;font-weight:700;color:var(--teal-700);margin-top:4px;}
+
   .portfolio-grid{
     display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:4px;
   }
@@ -271,6 +329,7 @@
     <button class="tab-btn" id="tabSavedBtn" type="button">Cotizaciones guardadas</button>
     <button class="tab-btn" id="tabProposalBtn" type="button">Propuesta de servicios</button>
     <button class="tab-btn" id="tabPaymentBtn" type="button">Datos de pago</button>
+    <button class="tab-btn" id="tabBalanceBtn" type="button">Balance de trabajos</button>
   </div>
 
   <div id="viewNewQuote">
@@ -507,6 +566,92 @@
       </div>
     </section>
   </div>
+
+  <div id="viewBalance" style="display:none;">
+    <section class="card">
+      <h2><span class="dot"></span><span id="balFormTitle">Nuevo trabajo</span></h2>
+      <p class="bal-status" id="balStatus"></p>
+      <div class="grid2">
+        <div class="field">
+          <label for="balClient">Cliente *</label>
+          <input type="text" id="balClient" placeholder="Nombre del cliente">
+        </div>
+        <div class="field">
+          <label for="balDate">Fecha *</label>
+          <input type="date" id="balDate">
+        </div>
+      </div>
+      <div class="grid2" style="margin-top:18px;">
+        <div class="field">
+          <label for="balPrice">Precio del trabajo (sin IVA) *</label>
+          <input type="number" id="balPrice" min="0" step="0.01" inputmode="decimal" placeholder="0,00">
+        </div>
+        <div class="field">
+          <label for="balInvoice">Tipo de venta</label>
+          <select id="balInvoice">
+            <option value="no">Sin factura</option>
+            <option value="si">Con factura (suma IVA 13%)</option>
+          </select>
+        </div>
+      </div>
+
+      <h2 style="margin:26px 0 14px;"><span class="dot"></span>Gastos</h2>
+      <div id="balExpensesList"></div>
+      <button class="add-row" id="balAddExpenseBtn" type="button">+ Agregar gasto</button>
+
+      <div class="bal-live">
+        <div><span class="k">Precio sin IVA</span><span class="v" id="balLivePrice">₡0,00</span></div>
+        <div id="balLiveIvaRow"><span class="k">IVA (13%)</span><span class="v" id="balLiveIva">₡0,00</span></div>
+        <div id="balLiveTotalRow"><span class="k">Total a cobrar</span><span class="v" id="balLiveTotal">₡0,00</span></div>
+        <div><span class="k">Gastos</span><span class="v" id="balLiveExp">₡0,00</span></div>
+        <div class="profit"><span class="k">Utilidad (sin IVA − gastos)</span><span class="v" id="balLiveProfit">₡0,00</span></div>
+      </div>
+
+      <div class="pay-actions" style="margin-top:18px;">
+        <button class="btn-sec" id="balCancelBtn" type="button" style="display:none;">Cancelar edición</button>
+        <button class="btn-pdf" id="balSaveBtn" type="button">Guardar trabajo</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2><span class="dot"></span>Filtrar por fecha</h2>
+      <div class="grid2">
+        <div class="field">
+          <label for="balFrom">Desde</label>
+          <input type="date" id="balFrom">
+        </div>
+        <div class="field">
+          <label for="balTo">Hasta</label>
+          <input type="date" id="balTo">
+        </div>
+      </div>
+      <button type="button" class="add-row" id="balClearFiltersBtn">Limpiar filtros</button>
+    </section>
+
+    <section class="card">
+      <h2><span class="dot"></span>Trabajos</h2>
+      <div id="balJobsList"></div>
+      <p class="legend" id="balEmptyMsg" style="display:none;">Todavía no hay trabajos registrados.</p>
+    </section>
+
+    <section class="card">
+      <h2><span class="dot"></span>Resumen y reparto</h2>
+      <div class="bal-live" style="margin-top:0;">
+        <div><span class="k">Trabajos</span><span class="v" id="balSumCount">0</span></div>
+        <div><span class="k">Total sin IVA</span><span class="v" id="balSumPrice">₡0,00</span></div>
+        <div><span class="k">IVA cobrado</span><span class="v" id="balSumIva">₡0,00</span></div>
+        <div><span class="k">Gastos</span><span class="v" id="balSumExp">₡0,00</span></div>
+        <div class="profit"><span class="k">Utilidad total</span><span class="v" id="balSumProfit">₡0,00</span></div>
+      </div>
+      <div class="split-grid">
+        <div class="split-box"><div class="who">Le toca a Jaime (50%)</div><div class="amt" id="balJaime">₡0,00</div></div>
+        <div class="split-box"><div class="who">Le toca a Francisco (50%)</div><div class="amt" id="balFran">₡0,00</div></div>
+      </div>
+      <div class="pay-actions" style="margin-top:18px;">
+        <button class="btn-pdf" id="balReportBtn" type="button">🖼 Generar reporte (copiar imagen)</button>
+      </div>
+    </section>
+  </div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -688,7 +833,8 @@ const TABS = [
   { btn: 'tabNewBtn', view: 'viewNewQuote' },
   { btn: 'tabSavedBtn', view: 'viewSavedQuotes' },
   { btn: 'tabProposalBtn', view: 'viewProposal' },
-  { btn: 'tabPaymentBtn', view: 'viewPayment' }
+  { btn: 'tabPaymentBtn', view: 'viewPayment' },
+  { btn: 'tabBalanceBtn', view: 'viewBalance' }
 ];
 function activateTab(activeBtnId){
   TABS.forEach(t=>{
@@ -1443,27 +1589,23 @@ async function renderPayCanvas(d){
   return canvas;
 }
 
-document.getElementById('payCopyImgBtn').addEventListener('click', async ()=>{
-  const d = getValidPayData();
-  if(!d) return;
-  const btn = document.getElementById('payCopyImgBtn');
-  btn.disabled = true;
-  const safeClient = d.client.replace(/[^a-z0-9áéíóúñ]+/gi,'_');
+// Copia un canvas como imagen al portapapeles; si el navegador no lo permite, la descarga como PNG
+async function copyOrDownloadImage(makeCanvas, filename, okMsg){
   const makeBlob = async ()=>{
-    const canvas = await renderPayCanvas(d);
+    const canvas = await makeCanvas();
     return await new Promise((res, rej)=>canvas.toBlob(b=> b ? res(b) : rej(new Error('blob')), 'image/png'));
   };
   const downloadBlob = blob=>{
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url; a.download = `Datos_de_pago_CleanCarpet_${safeClient}.png`;
+    a.href = url; a.download = filename;
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(()=>URL.revokeObjectURL(url), 2000);
   };
   try{
     if(navigator.clipboard && window.ClipboardItem){
       await navigator.clipboard.write([new ClipboardItem({'image/png': makeBlob()})]);
-      showToast('Imagen copiada. Ya podés pegarla en el chat.');
+      showToast(okMsg);
     } else {
       downloadBlob(await makeBlob());
       showToast('Tu navegador no permite copiar; se descargó la imagen.');
@@ -1475,9 +1617,17 @@ document.getElementById('payCopyImgBtn').addEventListener('click', async ()=>{
     } catch(e2){
       showToast('No se pudo generar la imagen. Intentá de nuevo.');
     }
-  } finally {
-    btn.disabled = false;
   }
+}
+
+document.getElementById('payCopyImgBtn').addEventListener('click', async ()=>{
+  const d = getValidPayData();
+  if(!d) return;
+  const btn = document.getElementById('payCopyImgBtn');
+  btn.disabled = true;
+  const safeClient = d.client.replace(/[^a-z0-9áéíóúñ]+/gi,'_');
+  await copyOrDownloadImage(()=>renderPayCanvas(d), `Datos_de_pago_CleanCarpet_${safeClient}.png`, 'Imagen copiada. Ya podés pegarla en el chat.');
+  btn.disabled = false;
 });
 </script>
 
@@ -1488,7 +1638,7 @@ import {
   getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import {
-  getFirestore, doc, runTransaction, setDoc, updateDoc, collection, query, where, onSnapshot, serverTimestamp
+  getFirestore, doc, runTransaction, setDoc, updateDoc, deleteDoc, collection, query, where, onSnapshot, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -1642,6 +1792,459 @@ document.getElementById('clearFiltersBtn').addEventListener('click', ()=>{
   renderSavedQuotes();
 });
 
+/* ---------- Balance de trabajos ---------- */
+const BAL_LOCAL_KEY = 'cleancarpet_jobs_v1';
+const IVA_RATE = 0.13;
+let balJobs = [];
+let balMode = 'cloud';          // 'cloud' = Firestore compartido, 'local' = solo este dispositivo
+let balUnsub = null;
+let balEditingId = null;
+const balEl = id => document.getElementById(id);
+const balExpList = balEl('balExpensesList');
+
+function balLoadLocal(){
+  try{ const a = JSON.parse(localStorage.getItem(BAL_LOCAL_KEY) || '[]'); return Array.isArray(a) ? a : []; }
+  catch(e){ return []; }
+}
+function balSaveLocal(){
+  try{ localStorage.setItem(BAL_LOCAL_KEY, JSON.stringify(balJobs)); }catch(e){}
+}
+
+function jobCalc(j){
+  const price = Number(j.price) || 0;
+  const iva = j.invoice ? price * IVA_RATE : 0;
+  const exp = (j.expenses || []).reduce((s,e)=> s + (Number(e.amount) || 0), 0);
+  return { price, iva, total: price + iva, exp, profit: price - exp };
+}
+
+function startBalanceListener(){
+  if(balUnsub) return;
+  balUnsub = onSnapshot(collection(db, 'jobs'), (snap)=>{
+    balMode = 'cloud';
+    balJobs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    balRender();
+  }, (err)=>{
+    console.warn('Balance: no se pudo leer la colección jobs, se usa el almacenamiento local.', err);
+    balMode = 'local';
+    balJobs = balLoadLocal();
+    balRender();
+  });
+}
+function stopBalanceListener(){
+  if(balUnsub){ balUnsub(); balUnsub = null; }
+  balJobs = [];
+  balRender();
+}
+
+async function balPersist(job){
+  if(balMode === 'cloud'){
+    try{
+      const { id, ...data } = job;
+      await setDoc(doc(db, 'jobs', id), data);
+      return;
+    } catch(err){
+      if(!(err && err.code === 'permission-denied')) throw err;
+      balMode = 'local';
+      balJobs = balLoadLocal();
+    }
+  }
+  const i = balJobs.findIndex(x => x.id === job.id);
+  if(i >= 0) balJobs[i] = job; else balJobs.push(job);
+  balSaveLocal();
+  balRender();
+}
+
+async function balRemove(id){
+  if(balMode === 'cloud'){
+    try{
+      await deleteDoc(doc(db, 'jobs', id));
+      return;
+    } catch(err){
+      if(!(err && err.code === 'permission-denied')) throw err;
+      balMode = 'local';
+      balJobs = balLoadLocal();
+    }
+  }
+  balJobs = balJobs.filter(x => x.id !== id);
+  balSaveLocal();
+  balRender();
+}
+
+/* --- Formulario --- */
+function balAddExpenseRow(desc, amount){
+  const row = document.createElement('div');
+  row.className = 'exp-row';
+  row.innerHTML = `
+    <div class="field exp-desc"><label>Descripción del gasto</label><input type="text" class="exp-d" placeholder="Ej. Combustible, insumos, ayudante"></div>
+    <div class="field"><label>Monto</label><input type="number" class="exp-a" min="0" step="0.01" inputmode="decimal" placeholder="0,00"></div>
+    <button type="button" class="btn-del" title="Eliminar gasto">✕</button>
+  `;
+  row.querySelector('.exp-d').value = desc || '';
+  row.querySelector('.exp-a').value = (amount === undefined || amount === null) ? '' : amount;
+  row.querySelector('.btn-del').addEventListener('click', ()=>{ row.remove(); balLive(); });
+  row.addEventListener('input', balLive);
+  balExpList.appendChild(row);
+}
+
+function balReadForm(){
+  return {
+    client: balEl('balClient').value.trim(),
+    date: balEl('balDate').value,
+    price: parseFloat(balEl('balPrice').value) || 0,
+    invoice: balEl('balInvoice').value === 'si',
+    expenses: [...balExpList.querySelectorAll('.exp-row')].map(r => ({
+      desc: r.querySelector('.exp-d').value.trim(),
+      amount: parseFloat(r.querySelector('.exp-a').value) || 0
+    })).filter(e => e.desc || e.amount)
+  };
+}
+
+function balLive(){
+  const f = balReadForm();
+  const c = jobCalc(f);
+  balEl('balLivePrice').textContent = formatCurrency(c.price);
+  balEl('balLiveIva').textContent = formatCurrency(c.iva);
+  balEl('balLiveTotal').textContent = formatCurrency(c.total);
+  balEl('balLiveExp').textContent = formatCurrency(c.exp);
+  const p = balEl('balLiveProfit');
+  p.textContent = formatCurrency(c.profit);
+  p.classList.toggle('neg', c.profit < 0);
+  balEl('balLiveIvaRow').style.display = f.invoice ? '' : 'none';
+  balEl('balLiveTotalRow').style.display = f.invoice ? '' : 'none';
+}
+
+function balResetForm(){
+  balEditingId = null;
+  balEl('balClient').value = '';
+  balEl('balDate').value = todayISO();
+  balEl('balPrice').value = '';
+  balEl('balInvoice').value = 'no';
+  balExpList.innerHTML = '';
+  balAddExpenseRow();
+  balEl('balFormTitle').textContent = 'Nuevo trabajo';
+  balEl('balSaveBtn').textContent = 'Guardar trabajo';
+  balEl('balCancelBtn').style.display = 'none';
+  balLive();
+}
+
+function balStartEdit(id){
+  const j = balJobs.find(x => x.id === id);
+  if(!j) return;
+  balEditingId = id;
+  balEl('balClient').value = j.client || '';
+  balEl('balDate').value = j.date || todayISO();
+  balEl('balPrice').value = j.price || '';
+  balEl('balInvoice').value = j.invoice ? 'si' : 'no';
+  balExpList.innerHTML = '';
+  (j.expenses || []).forEach(e => balAddExpenseRow(e.desc, e.amount));
+  if(!balExpList.children.length) balAddExpenseRow();
+  balEl('balFormTitle').textContent = 'Editar trabajo';
+  balEl('balSaveBtn').textContent = 'Guardar cambios';
+  balEl('balCancelBtn').style.display = '';
+  balLive();
+  balEl('balFormTitle').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+balEl('balAddExpenseBtn').addEventListener('click', ()=> balAddExpenseRow());
+['balClient','balDate','balPrice','balInvoice'].forEach(id=>{
+  balEl(id).addEventListener('input', balLive);
+  balEl(id).addEventListener('change', balLive);
+});
+balEl('balCancelBtn').addEventListener('click', balResetForm);
+
+balEl('balSaveBtn').addEventListener('click', async ()=>{
+  const f = balReadForm();
+  if(!f.client){ showToast('Ingresá el nombre del cliente.'); balEl('balClient').focus(); return; }
+  if(!f.date){ showToast('Ingresá la fecha del trabajo.'); balEl('balDate').focus(); return; }
+  if(!f.price){ showToast('Ingresá el precio del trabajo.'); balEl('balPrice').focus(); return; }
+  f.expenses = f.expenses.map(e => ({ desc: e.desc || 'Gasto', amount: e.amount }));
+
+  const btn = balEl('balSaveBtn');
+  btn.disabled = true;
+  const id = balEditingId || doc(collection(db, 'jobs')).id;
+  const existing = balJobs.find(j => j.id === id);
+  const job = {
+    id, ...f,
+    createdAtMs: (existing && existing.createdAtMs) || Date.now(),
+    createdByName: (existing && existing.createdByName) || USER_NAMES[window.currentUserEmail] || window.currentUserEmail || 'Desconocido'
+  };
+  try{
+    await balPersist(job);
+    showToast(balEditingId ? 'Cambios guardados.' : 'Trabajo guardado.');
+    balResetForm();
+  } catch(err){
+    console.error(err);
+    showToast('No se pudo guardar el trabajo. Intentá de nuevo.');
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+/* --- Lista, filtros y resumen --- */
+function balFiltered(){
+  const from = balEl('balFrom').value, to = balEl('balTo').value;
+  return balJobs.filter(j => (!from || j.date >= from) && (!to || j.date <= to));
+}
+const balNewestFirst = (a,b)=> a.date < b.date ? 1 : a.date > b.date ? -1 : (b.createdAtMs||0) - (a.createdAtMs||0);
+const balOldestFirst = (a,b)=> a.date > b.date ? 1 : a.date < b.date ? -1 : (a.createdAtMs||0) - (b.createdAtMs||0);
+
+function jobCardHtml(j){
+  const c = jobCalc(j);
+  const exps = (j.expenses || []).map(e =>
+    `<div><span>${escapeHtml(e.desc || 'Gasto')}</span><span>${escapeHtml(formatCurrency(Number(e.amount) || 0))}</span></div>`).join('');
+  const ivaRows = j.invoice ? `
+      <tr><td class="k">IVA (13%)</td><td class="v">${escapeHtml(formatCurrency(c.iva))}</td></tr>
+      <tr><td class="k">Total cobrado</td><td class="v">${escapeHtml(formatCurrency(c.total))}</td></tr>` : '';
+  return `
+    <div class="job-card">
+      <div class="job-head">
+        <div><span class="job-client">${escapeHtml(j.client)}</span><span class="job-date">${j.date ? escapeHtml(formatDateEs(j.date)) : '-'}${j.createdByName ? ' · ' + escapeHtml(j.createdByName) : ''}</span></div>
+        <span class="badge-inv ${j.invoice ? '' : 'no'}">${j.invoice ? 'Con factura' : 'Sin factura'}</span>
+      </div>
+      <table class="job-table">
+        <tr><td class="k">Precio sin IVA</td><td class="v">${escapeHtml(formatCurrency(c.price))}</td></tr>${ivaRows}
+        <tr><td class="k">Gastos</td><td class="v">${escapeHtml(formatCurrency(c.exp))}</td></tr>
+        <tr class="profit"><td class="k">Utilidad</td><td class="v ${c.profit < 0 ? 'neg' : ''}">${escapeHtml(formatCurrency(c.profit))}</td></tr>
+      </table>
+      ${exps ? `<div class="job-exp">${exps}</div>` : ''}
+      <div class="job-actions">
+        <button type="button" class="btn-mini" data-edit="${escapeHtml(j.id)}">Editar</button>
+        <button type="button" class="btn-mini danger" data-del="${escapeHtml(j.id)}">Eliminar</button>
+      </div>
+    </div>`;
+}
+
+function balTotals(jobs){
+  const t = { count: jobs.length, price: 0, iva: 0, exp: 0, profit: 0 };
+  jobs.forEach(j=>{ const c = jobCalc(j); t.price += c.price; t.iva += c.iva; t.exp += c.exp; t.profit += c.profit; });
+  t.half = t.profit / 2;
+  return t;
+}
+
+function balRender(){
+  const st = balEl('balStatus');
+  if(balMode === 'cloud'){
+    st.textContent = '☁ Los trabajos se comparten entre Jaime y Francisco.';
+    st.classList.remove('warn');
+  } else {
+    st.textContent = '⚠ Los trabajos se guardan solo en este dispositivo (Firestore no permite la colección "jobs").';
+    st.classList.add('warn');
+  }
+  const jobs = balFiltered().sort(balNewestFirst);
+  balEl('balJobsList').innerHTML = jobs.map(jobCardHtml).join('');
+  balEl('balEmptyMsg').style.display = jobs.length ? 'none' : 'block';
+  const t = balTotals(jobs);
+  balEl('balSumCount').textContent = String(t.count);
+  balEl('balSumPrice').textContent = formatCurrency(t.price);
+  balEl('balSumIva').textContent = formatCurrency(t.iva);
+  balEl('balSumExp').textContent = formatCurrency(t.exp);
+  const sp = balEl('balSumProfit');
+  sp.textContent = formatCurrency(t.profit);
+  sp.classList.toggle('neg', t.profit < 0);
+  balEl('balJaime').textContent = formatCurrency(t.half);
+  balEl('balFran').textContent = formatCurrency(t.half);
+}
+
+balEl('balJobsList').addEventListener('click', async (e)=>{
+  const editBtn = e.target.closest('[data-edit]');
+  const delBtn = e.target.closest('[data-del]');
+  if(editBtn){ balStartEdit(editBtn.dataset.edit); return; }
+  if(delBtn){
+    const j = balJobs.find(x => x.id === delBtn.dataset.del);
+    if(!j || !confirm(`¿Eliminar el trabajo de ${j.client}? Esta acción no se puede deshacer.`)) return;
+    try{
+      await balRemove(j.id);
+      if(balEditingId === j.id) balResetForm();
+      showToast('Trabajo eliminado.');
+    } catch(err){
+      console.error(err);
+      showToast('No se pudo eliminar el trabajo.');
+    }
+  }
+});
+['balFrom','balTo'].forEach(id => balEl(id).addEventListener('input', balRender));
+balEl('balClearFiltersBtn').addEventListener('click', ()=>{
+  balEl('balFrom').value = '';
+  balEl('balTo').value = '';
+  balRender();
+});
+
+/* --- Reporte como imagen --- */
+function shortDateEs(iso){
+  const [y,m,d] = iso.split('-');
+  return `${d}/${m}/${y}`;
+}
+
+async function renderBalanceCanvas(jobs){
+  if(document.fonts && document.fonts.ready){ try{ await document.fonts.ready; }catch(e){} }
+  const logo = new Image();
+  logo.src = logoDataUrl;
+  try{ await logo.decode(); }catch(e){}
+
+  const W = 1000, pad = 40, scale = 2, innerW = W - pad*2;
+  const FONT = "'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif";
+  const HEAD = "'Poppins', 'Inter', system-ui, sans-serif";
+  // Posiciones (relativas a pad): x izquierda para texto y x derecha para montos
+  const X_DATE = 10, X_CLIENT = 100, X_TYPE = 335;
+  const R_PRICE = 545, R_IVA = 670, R_EXP = 795, R_PROFIT = innerW - 10;
+  const CLIENT_W = 225;
+
+  const from = balEl('balFrom').value, to = balEl('balTo').value;
+  const period = (from || to)
+    ? `Período: ${from ? shortDateEs(from) : 'inicio'} al ${to ? shortDateEs(to) : 'hoy'}`
+    : 'Todos los trabajos';
+  const t = balTotals(jobs);
+
+  function wrap(ctx, text, maxWidth){
+    const out = [];
+    String(text).split('\n').forEach(par=>{
+      let line = '';
+      par.split(/\s+/).forEach(word=>{
+        const test = line ? line + ' ' + word : word;
+        if(line && ctx.measureText(test).width > maxWidth){ out.push(line); line = word; }
+        else line = test;
+      });
+      out.push(line);
+    });
+    return out;
+  }
+  function put(ctx, str, x, y, align){
+    ctx.textAlign = align || 'left';
+    ctx.fillText(str, x, y);
+    ctx.textAlign = 'left';
+  }
+
+  function paint(ctx, draw){
+    let y = pad;
+    ctx.textBaseline = 'alphabetic';
+    if(draw){ ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, W, 6000); }
+
+    // Encabezado
+    if(draw){
+      try{ ctx.drawImage(logo, pad, y, 64, 64); }catch(e){}
+      ctx.fillStyle = '#0a3b38'; ctx.font = `700 28px ${HEAD}`;
+      put(ctx, 'Balance de trabajos', pad + 80, y + 30);
+      ctx.fillStyle = '#6b7280'; ctx.font = `400 15px ${FONT}`;
+      put(ctx, `CleanCarpet · ${period}`, pad + 80, y + 54);
+      put(ctx, 'Generado: ' + shortDateEs(todayISO()), W - pad, y + 54, 'right');
+    }
+    y += 64 + 24;
+
+    // Cabecera de la tabla
+    if(draw){
+      ctx.fillStyle = '#0f766e';
+      ctx.beginPath();
+      if(ctx.roundRect) ctx.roundRect(pad, y, innerW, 34, 8); else ctx.rect(pad, y, innerW, 34);
+      ctx.fill();
+      ctx.fillStyle = '#ffffff'; ctx.font = `700 12px ${FONT}`;
+      put(ctx, 'FECHA', pad + X_DATE, y + 22);
+      put(ctx, 'CLIENTE', pad + X_CLIENT, y + 22);
+      put(ctx, 'FACTURA', pad + X_TYPE, y + 22);
+      put(ctx, 'PRECIO S/IVA', pad + R_PRICE, y + 22, 'right');
+      put(ctx, 'IVA', pad + R_IVA, y + 22, 'right');
+      put(ctx, 'GASTOS', pad + R_EXP, y + 22, 'right');
+      put(ctx, 'UTILIDAD', pad + R_PROFIT, y + 22, 'right');
+    }
+    y += 34;
+
+    // Filas
+    jobs.forEach((j, i)=>{
+      const c = jobCalc(j);
+      ctx.font = `600 14px ${FONT}`;
+      const clientLines = wrap(ctx, j.client, CLIENT_W);
+      const exps = j.expenses || [];
+      const expText = exps.length
+        ? 'Gastos: ' + exps.map(e => `${e.desc || 'Gasto'} ${formatCurrency(Number(e.amount) || 0)}`).join('  ·  ')
+        : '';
+      ctx.font = `400 12px ${FONT}`;
+      const expLines = expText ? wrap(ctx, expText, innerW - 24) : [];
+      const rowH = 14 + clientLines.length * 20 + (expLines.length ? expLines.length * 17 + 6 : 0) + 6;
+      if(draw){
+        if(i % 2 === 0){ ctx.fillStyle = '#f7fafa'; ctx.fillRect(pad, y, innerW, rowH); }
+        const base = y + 14 + 14;
+        ctx.fillStyle = '#374151'; ctx.font = `400 14px ${FONT}`;
+        put(ctx, shortDateEs(j.date), pad + X_DATE, base);
+        ctx.fillStyle = '#0a3b38'; ctx.font = `600 14px ${FONT}`;
+        clientLines.forEach((ln, k)=> put(ctx, ln, pad + X_CLIENT, base + k*20));
+        ctx.fillStyle = j.invoice ? '#047857' : '#475569'; ctx.font = `600 13px ${FONT}`;
+        put(ctx, j.invoice ? 'Con factura' : 'Sin factura', pad + X_TYPE, base);
+        ctx.fillStyle = '#1f2937'; ctx.font = `400 14px ${FONT}`;
+        put(ctx, formatCurrency(c.price), pad + R_PRICE, base, 'right');
+        put(ctx, j.invoice ? formatCurrency(c.iva) : '—', pad + R_IVA, base, 'right');
+        put(ctx, formatCurrency(c.exp), pad + R_EXP, base, 'right');
+        ctx.fillStyle = c.profit < 0 ? '#dc2626' : '#0f766e'; ctx.font = `700 14px ${FONT}`;
+        put(ctx, formatCurrency(c.profit), pad + R_PROFIT, base, 'right');
+        if(expLines.length){
+          ctx.fillStyle = '#6b7280'; ctx.font = `400 12px ${FONT}`;
+          const ey = base + (clientLines.length - 1) * 20 + 22;
+          expLines.forEach((ln, k)=> put(ctx, ln, pad + X_CLIENT, ey + k*17));
+        }
+      }
+      y += rowH;
+    });
+
+    // Totales
+    if(draw){ ctx.fillStyle = '#0f766e'; ctx.fillRect(pad, y + 4, innerW, 2); }
+    y += 28;
+    if(draw){
+      ctx.fillStyle = '#0a3b38'; ctx.font = `700 15px ${FONT}`;
+      put(ctx, `TOTAL (${t.count} ${t.count === 1 ? 'trabajo' : 'trabajos'})`, pad + X_DATE, y);
+      put(ctx, formatCurrency(t.price), pad + R_PRICE, y, 'right');
+      put(ctx, formatCurrency(t.iva), pad + R_IVA, y, 'right');
+      put(ctx, formatCurrency(t.exp), pad + R_EXP, y, 'right');
+      ctx.fillStyle = t.profit < 0 ? '#dc2626' : '#0f766e';
+      put(ctx, formatCurrency(t.profit), pad + R_PROFIT, y, 'right');
+    }
+    y += 40;
+
+    // Reparto
+    if(draw){
+      ctx.fillStyle = '#0f766e'; ctx.font = `700 19px ${HEAD}`;
+      put(ctx, 'Reparto de la utilidad (50% / 50%)', pad, y);
+    }
+    y += 18;
+    const boxW = (innerW - 20) / 2, boxH = 84;
+    [['Le toca a Jaime', 0], ['Le toca a Francisco', 1]].forEach(([who, k])=>{
+      if(draw){
+        const bx = pad + k * (boxW + 20);
+        ctx.fillStyle = '#f0fdfa'; ctx.strokeStyle = '#ccece8'; ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        if(ctx.roundRect) ctx.roundRect(bx, y, boxW, boxH, 12); else ctx.rect(bx, y, boxW, boxH);
+        ctx.fill(); ctx.stroke();
+        ctx.fillStyle = '#6b7280'; ctx.font = `600 14px ${FONT}`;
+        put(ctx, who.toUpperCase(), bx + 20, y + 30);
+        ctx.fillStyle = t.half < 0 ? '#dc2626' : '#0f766e'; ctx.font = `700 28px ${FONT}`;
+        put(ctx, formatCurrency(t.half), bx + 20, y + 66);
+      }
+    });
+    y += boxH;
+
+    return y + pad;
+  }
+
+  const probe = document.createElement('canvas').getContext('2d');
+  const H = Math.ceil(paint(probe, false));
+  const canvas = document.createElement('canvas');
+  canvas.width = W * scale;
+  canvas.height = H * scale;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(scale, scale);
+  paint(ctx, true);
+  return canvas;
+}
+
+balEl('balReportBtn').addEventListener('click', async ()=>{
+  const jobs = balFiltered().sort(balOldestFirst);
+  if(!jobs.length){ showToast('No hay trabajos para el reporte.'); return; }
+  const btn = balEl('balReportBtn');
+  btn.disabled = true;
+  await copyOrDownloadImage(()=>renderBalanceCanvas(jobs), `Balance_trabajos_CleanCarpet_${todayISO()}.png`, 'Reporte copiado. Ya podés pegarlo en el chat.');
+  btn.disabled = false;
+});
+
+balResetForm();
+balRender();
+
 const loginScreen = document.getElementById('loginScreen');
 const appContent = document.getElementById('appContent');
 const loginForm = document.getElementById('loginForm');
@@ -1669,11 +2272,13 @@ onAuthStateChanged(auth, (user) => {
     userEmailLabel.textContent = user.email;
     window.currentUserEmail = user.email;
     startQuotesListeners();
+    startBalanceListener();
   } else {
     appContent.style.display = 'none';
     loginScreen.style.display = 'flex';
     window.currentUserEmail = null;
     stopQuotesListeners();
+    stopBalanceListener();
     pendingQuotes = [];
     confirmedQuotes = [];
   }
